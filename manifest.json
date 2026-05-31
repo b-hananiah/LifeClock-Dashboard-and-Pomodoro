@@ -2,7 +2,7 @@
   "name": "LifeClock Dashboard",
   "short_name": "LifeClock",
   "description": "Track your time, manage segments, and analyze productivity with heatmaps",
-  "start_url": "/LifeClock_vX.html",
+  "start_url": "/index.html",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
