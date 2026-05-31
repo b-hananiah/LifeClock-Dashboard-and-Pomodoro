@@ -5341,13 +5341,62 @@ if (document.readyState === 'loading') {
         document.getElementById("tr-modal").classList.remove("open");
       }
       let focusModeOn = false;
+      let focusMessageInterval = null;
+      let currentFocusMessage = "";
       function toggleFocusMode() {
         focusModeOn = !focusModeOn;
         document
           .getElementById("focus-overlay")
           .classList.toggle("on", focusModeOn);
-        if (focusModeOn) renderFocusMode();
+        if (focusModeOn) {
+          renderFocusMode();
+          startFocusMessageRotation();  // Start rotating messages
+        } else {
+            stopFocusMessageRotation();   // Stop rotating when exiting
+        }
       }
+      // Update only the message on the focus screen (not the whole display)
+function updateFocusMessage() {
+  const focusMsg = document.getElementById('focus-message');
+  if (focusMsg && typeof splashMessages !== 'undefined' && splashMessages.length > 0) {
+    // Get a different message than the current one (optional - prevents repeats)
+    let newMessage = currentFocusMessage;
+    while (newMessage === currentFocusMessage && splashMessages.length > 1) {
+      const randomIndex = Math.floor(Math.random() * splashMessages.length);
+      newMessage = splashMessages[randomIndex];
+    }
+    currentFocusMessage = newMessage;
+    focusMsg.textContent = currentFocusMessage;
+    
+    // Add a subtle fade animation when message changes
+    focusMsg.style.transition = 'opacity 0.3s ease';
+    focusMsg.style.opacity = '0';
+    setTimeout(() => {
+      focusMsg.style.opacity = '1';
+    }, 50);
+  }
+}
+      // Start the message rotation when focus mode is entered
+function startFocusMessageRotation() {
+  // Clear any existing interval
+  if (focusMessageInterval) {
+    clearInterval(focusMessageInterval);
+  }
+  
+  // Set a new interval - change message every 30 seconds (adjust as needed)
+  focusMessageInterval = setInterval(() => {
+    updateFocusMessage();
+  }, 300000); // 5 minutes - change this value to adjust speed
+}
+
+// Stop message rotation when focus mode is exited
+function stopFocusMessageRotation() {
+  if (focusMessageInterval) {
+    clearInterval(focusMessageInterval);
+    focusMessageInterval = null;
+  }
+}
+      
       function renderFocusMode(){
   const now = new Date();
   const hh = now.getHours();
@@ -5404,16 +5453,22 @@ if (document.readyState === 'loading') {
       text-align: center;
       padding: 12px 20px;
       color: #a78bfa;
-      font-size: 14px;
+      font-size: 16px;
       font-family: system-ui;
       max-width: 85%;
       margin: 0 auto;
       background: rgba(0,0,0,0.3);
       border-radius: 40px;
       backdrop-filter: blur(8px);
+      transition: opacity 0.3s ease;
     `;
     document.getElementById('focus-overlay').appendChild(focusMsg);
   }
+        // Set initial message
+    if (typeof splashMessages !== 'undefined' && splashMessages.length > 0) {
+      currentFocusMessage = splashMessages[0];
+      focusMsg.textContent = currentFocusMessage;
+    }
   
   // Use fallback messages if splashMessages isn't defined yet
   if (focusMsg) {
