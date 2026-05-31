@@ -5222,7 +5222,7 @@
     }
   }
   
-  // Add scripture message (from earlier implementation)
+  // Add scripture message (use fallback if splashMessages not available)
   let focusMsg = document.getElementById('focus-message');
   if (!focusMsg && document.getElementById('focus-overlay')) {
     focusMsg = document.createElement('div');
@@ -5246,9 +5246,16 @@
     document.getElementById('focus-overlay').appendChild(focusMsg);
   }
   
-  if (focusMsg && typeof splashMessages !== 'undefined' && splashMessages.length > 0) {
-    const randomIndex = Math.floor(Math.random() * splashMessages.length);
-    focusMsg.textContent = splashMessages[randomIndex];
+  // Use fallback messages if splashMessages isn't defined yet
+  if (focusMsg) {
+    const fallbackMessages = [
+      "Teach us to number our days. (Psalm 90:12)",
+      "Redeeming the time. (Ephesians 5:16)",
+      "For every purpose under heaven. (Ecclesiastes 3:1)",
+      "Whatever you do, work heartily for the Lord. (Colossians 3:23)"
+    ];
+    const randomIndex = Math.floor(Math.random() * fallbackMessages.length);
+    focusMsg.textContent = fallbackMessages[randomIndex];
   }
 }
 
