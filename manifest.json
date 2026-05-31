@@ -2,7 +2,7 @@
   "name": "LifeClock Dashboard & Pomodoro",
   "short_name": "LifeClock",
   "description": "Track your time, manage segments, and analyze productivity with heatmaps",
-  "start_url": "/LifeClock-Dashboard-and-Pomodoro/.html",
+  "start_url": "/LifeClock-Dashboard-and-Pomodoro/",
   "scope": "/LifeClock-Dashboard-and-Pomodoro/",
   "display": "standalone",
   "orientation": "any",
@@ -69,7 +69,7 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
-    "categories": ["productivity", "lifestyle", "education"],
+  ],
+  "categories": ["productivity", "lifestyle", "education"],
   "lang": "en"
 }
