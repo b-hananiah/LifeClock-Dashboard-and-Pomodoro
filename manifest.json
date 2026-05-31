@@ -12,6 +12,12 @@
   
   "icons": [
     {
+      "src": "/LifeClock-Dashboard-and-Pomodoro/icons/icon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
       "src": "/LifeClock-Dashboard-and-Pomodoro/icons/icon-48x48.png",
       "sizes": "48x48",
       "type": "image/png",
@@ -73,7 +79,7 @@
     }
   ],
   "categories": ["productivity", "lifestyle", "education"],
-  "lang": "en"
+  "lang": "en",
   "screenshots": [
   {
     "src": "/LifeClock-Dashboard-and-Pomodoro/screenshots/splash.png",
