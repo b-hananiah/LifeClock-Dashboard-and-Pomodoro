@@ -1742,6 +1742,17 @@
         font-size: 12px;
         color: var(--text2);
       }
+      /* Focus screen Pomodoro styles */
+#focus-pomo-section button {
+  transition: all 0.2s ease;
+}
+#focus-pomo-section button:active {
+  transform: scale(0.96);
+}
+#focus-pomo-section button:hover {
+  filter: brightness(1.1);
+}
+      
     </style>
   </head>
   <body>
@@ -3387,15 +3398,32 @@
     <div id="toast">
       <span id="toast-msg"></span><button id="toast-undo-btn">Undo</button>
     </div>
-    <div id="focus-overlay">
-      <div class="focus-day" id="focus-day">--</div>
-      <div class="focus-time" id="focus-time-txt">--:--:--</div>
-      <div class="focus-seg-name" id="focus-seg-name">--</div>
-      <div class="focus-rem" id="focus-rem-txt">--</div>
-      <div class="focus-hint">
-        Click · <kbd>F</kbd> · <kbd>Esc</kbd> to exit
+    <div id="focus-overlay"> // Updated to include pomodoro on focus screen
+  <div class="focus-day" id="focus-day">--</div>
+  <div class="focus-time" id="focus-time-txt">--:--:--</div>
+  <div class="focus-seg-name" id="focus-seg-name">--</div>
+  <div class="focus-rem" id="focus-rem-txt">--</div>
+  
+  <!-- Pomodoro Section (hidden by default) -->
+  <div id="focus-pomo-section" style="display: none; margin-top: 20px; text-align: center;">
+    <div style="position: relative; width: 150px; height: 150px; margin: 0 auto;">
+      <svg viewBox="0 0 180 180" style="width: 100%; height: 100%; transform: rotate(-90deg);">
+        <circle cx="90" cy="90" r="84" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6"/>
+        <circle id="focus-pomo-ring" cx="90" cy="90" r="84" fill="none" stroke="#5c54db" stroke-width="7" stroke-linecap="round" stroke-dasharray="527.788" stroke-dashoffset="0" style="transition: stroke-dashoffset 0.35s linear;"/>
+      </svg>
+      <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+        <div id="focus-pomo-time" style="font-size: 28px; font-weight: 800; color: white; font-variant-numeric: tabular-nums;">25:00</div>
+        <div id="focus-pomo-mode" style="font-size: 10px; font-weight: 700; color: #a78bfa; text-transform: uppercase; letter-spacing: 2px;">Focus</div>
       </div>
     </div>
+    <div id="focus-pomo-controls" style="margin-top: 16px; display: flex; gap: 12px; justify-content: center;">
+      <button id="focus-pomo-start" style="background: #5c54db; border: none; padding: 8px 20px; border-radius: 30px; color: white; font-weight: 700; cursor: pointer;">Start</button>
+      <button id="focus-pomo-reset" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 8px 20px; border-radius: 30px; color: white; font-weight: 700; cursor: pointer;">Reset</button>
+    </div>
+  </div>
+  
+  <div class="focus-hint">Click · <kbd>F</kbd> · <kbd>Esc</kbd> to exit</div>
+</div>
 
     <script>
 
@@ -5151,33 +5179,110 @@
           .classList.toggle("on", focusModeOn);
         if (focusModeOn) renderFocusMode();
       }
-      function renderFocusMode() {
-        const now = new Date(),
-          hh = now.getHours(),
-          mm = now.getMinutes(),
-          ss = now.getSeconds();
-        const ts =
-          S.timeFormat === "24h"
-            ? `${hh.toString().padStart(2, "0")}:${mm.toString().padStart(2, "0")}:${ss.toString().padStart(2, "0")}`
-            : `${hh % 12 || 12}:${mm.toString().padStart(2, "0")}:${ss.toString().padStart(2, "0")} ${hh < 12 ? "AM" : "PM"}`;
-        document.getElementById("focus-time-txt").textContent = ts;
-        document.getElementById("focus-day").textContent =
-          `${DAYS[now.getDay()]}, ${MONTHS[now.getMonth()]} ${now.getDate()}`;
-        const seg = getActiveSeg();
-        if (seg) {
-          document.getElementById("focus-seg-name").textContent = seg.name;
-          const ct = hh + mm / 60 + ss / 3600,
-            end = seg.start + seg.dur;
-          let d = end - ct;
-          if (d < 0) d += 24;
-          document.getElementById("focus-rem-txt").textContent =
-            fmtRemHours(d) + " remaining";
-        } else {
-          document.getElementById("focus-seg-name").textContent =
-            "No active segment";
-          document.getElementById("focus-rem-txt").textContent = "";
-        }
-      }
+      function renderFocusMode(){
+  const now = new Date();
+  const hh = now.getHours();
+  const mm = now.getMinutes();
+  const ss = now.getSeconds();
+  
+  // Format time
+  const ts = S.timeFormat === '24h' 
+    ? `${hh.toString().padStart(2,'0')}:${mm.toString().padStart(2,'0')}:${ss.toString().padStart(2,'0')}`
+    : `${hh%12||12}:${mm.toString().padStart(2,'0')}:${ss.toString().padStart(2,'0')} ${hh<12?'AM':'PM'}`;
+  
+  document.getElementById('focus-time-txt').textContent = ts;
+  document.getElementById('focus-day').textContent = `${DAYS[now.getDay()]}, ${MONTHS[now.getMonth()]} ${now.getDate()}`;
+  
+  // Get active segment
+  const seg = getActiveSeg();
+  if(seg){
+    document.getElementById('focus-seg-name').textContent = seg.name;
+    const ct = hh + mm/60 + ss/3600;
+    let end = seg.start + seg.dur;
+    let d = end - ct;
+    if(d < 0) d += 24;
+    document.getElementById('focus-rem-txt').textContent = fmtRemHours(d) + ' remaining';
+  } else {
+    document.getElementById('focus-seg-name').textContent = 'No active segment';
+    document.getElementById('focus-rem-txt').textContent = '';
+  }
+  
+  // ===== SHOW/HIDE POMODORO BASED ON ACTIVE SESSION =====
+  const pomoSection = document.getElementById('focus-pomo-section');
+  if (pomoSection) {
+    // Show Pomodoro section if timer is running OR has been started (not idle)
+    const isPomoActive = pomoIsRunning || (pomoTimeLeft !== pomoDur(pomoMode) && !pomoIsRunning);
+    
+    if (isPomoActive) {
+      pomoSection.style.display = 'block';
+      // Update Pomodoro display in focus mode
+      updateFocusPomodoroDisplay();
+    } else {
+      pomoSection.style.display = 'none';
+    }
+  }
+  
+  // Add scripture message (from earlier implementation)
+  let focusMsg = document.getElementById('focus-message');
+  if (!focusMsg && document.getElementById('focus-overlay')) {
+    focusMsg = document.createElement('div');
+    focusMsg.id = 'focus-message';
+    focusMsg.style.cssText = `
+      position: fixed;
+      bottom: 80px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      padding: 12px 20px;
+      color: #a78bfa;
+      font-size: 14px;
+      font-family: system-ui;
+      max-width: 85%;
+      margin: 0 auto;
+      background: rgba(0,0,0,0.3);
+      border-radius: 40px;
+      backdrop-filter: blur(8px);
+    `;
+    document.getElementById('focus-overlay').appendChild(focusMsg);
+  }
+  
+  if (focusMsg && typeof splashMessages !== 'undefined' && splashMessages.length > 0) {
+    const randomIndex = Math.floor(Math.random() * splashMessages.length);
+    focusMsg.textContent = splashMessages[randomIndex];
+  }
+}
+
+// New function to update Pomodoro display in focus mode
+function updateFocusPomodoroDisplay() {
+  const focusPomoTime = document.getElementById('focus-pomo-time');
+  const focusPomoRing = document.getElementById('focus-pomo-ring');
+  const focusPomoMode = document.getElementById('focus-pomo-mode');
+  
+  if (!focusPomoTime) return;
+  
+  // Update time text
+  const m = Math.floor(pomoTimeLeft/60).toString().padStart(2,'0');
+  const s = (pomoTimeLeft%60).toString().padStart(2,'0');
+  focusPomoTime.textContent = `${m}:${s}`;
+  
+  // Update mode text
+  let modeText = 'Focus';
+  if (pomoMode === 'short-break') modeText = 'Short Break';
+  else if (pomoMode === 'long-break') modeText = 'Long Break';
+  focusPomoMode.textContent = modeText;
+  
+  // Update ring
+  const dash = 2 * Math.PI * 84;
+  const ratio = pomoTotalDur > 0 ? pomoTimeLeft / pomoTotalDur : 1;
+  focusPomoRing.style.strokeDasharray = dash;
+  focusPomoRing.style.strokeDashoffset = dash * (1 - ratio);
+  
+  // Update ring color based on mode
+  let ringColor = S.pomoColorFocus;
+  if (pomoMode === 'short-break') ringColor = S.pomoColorBreak;
+  else if (pomoMode === 'long-break') ringColor = S.pomoColorLongBreak;
+  focusPomoRing.style.stroke = ringColor;
+}
       function saveToHTML() {
         const stateJSON = JSON.stringify(S);
         let html = document.documentElement.outerHTML;
@@ -6039,7 +6144,55 @@
           renderActiveTasks();
           refreshHeatmaps();
         }
+        // Add this line to update focus mode Pomodoro if focus mode is on
+        if (focusModeOn) {
+          updateFocusPomodoroDisplay();
+        }
       }, 1000);
+      // Focus screen Pomodoro controls
+document.addEventListener('click', function(e) {
+  // Start button in focus mode
+  if (e.target.id === 'focus-pomo-start') {
+    if (pomoIsRunning) {
+      // Pause if running
+      clearInterval(pomoTimerId);
+      pomoIsRunning = false;
+      e.target.textContent = 'Start';
+    } else {
+      // Start if paused or idle
+      AudioEngine.init();
+      pomoIsRunning = true;
+      e.target.textContent = 'Pause';
+      pomoTimerId = setInterval(() => {
+        pomoTimeLeft--;
+        if (pomoTimeLeft <= 0) {
+          clearInterval(pomoTimerId);
+          advancePomo();
+        }
+        updatePomodoroUI();
+        updateFocusPomodoroDisplay(); // Update focus screen display
+      }, 1000);
+    }
+    updatePomodoroUI();
+    updateFocusPomodoroDisplay();
+  }
+  
+  // Reset button in focus mode
+  if (e.target.id === 'focus-pomo-reset') {
+    clearInterval(pomoTimerId);
+    pomoIsRunning = false;
+    pomoMode = 'focus';
+    pomoRoundsDone = 0;
+    pomoTimeLeft = pomoDur('focus');
+    pomoTotalDur = pomoTimeLeft;
+    updatePomodoroUI();
+    updateFocusPomodoroDisplay();
+    
+    // Update the start button text if it exists
+    const startBtn = document.getElementById('focus-pomo-start');
+    if (startBtn) startBtn.textContent = 'Start';
+  }
+});
     </script>
 
     <!-- HELP MODAL -->
@@ -6055,6 +6208,7 @@
         </button>
       </div>
     </div>
+    
 
     <!-- PWA Registration -->
     <script>
