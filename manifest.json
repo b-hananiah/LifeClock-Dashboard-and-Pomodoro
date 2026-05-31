@@ -1,0 +1,20 @@
+{
+  "background_color": "#ffffff",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "LifeClock Dashboard &amp; Pomodoro",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "LifeClock",
+  "start_url": "/",
+  "theme_color": "#ffffff",
+  "id": "lifeclock_vX",
+  "description": "Track your time, manage segments, and analyze productivity with heatmaps",
+  "categories": [
+    "education",
+    "lifestyle",
+    "personalization",
+    "productivity",
+    "utilities"
+  ]
+}
