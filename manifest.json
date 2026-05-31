@@ -6,8 +6,8 @@
   "scope": "/LifeClock-Dashboard-and-Pomodoro/",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#ffffff",
-  "theme_color": "#000000",
+  "background_color": "#5c54db",
+  "theme_color": "#06051a",
   "icons": [
     {
       "src": "/LifeClock-Dashboard-and-Pomodoro/icons/icon-48x48.png",
