@@ -74,4 +74,12 @@
   ],
   "categories": ["productivity", "lifestyle", "education"],
   "lang": "en"
+  "screenshots": [
+  {
+    "src": "/LifeClock-Dashboard-and-Pomodoro/screenshots/splash.png",
+    "sizes": "2752x2064",
+    "type": "image/png",
+    "label": "Life Clock splash screen"
+  }
+]
 }
