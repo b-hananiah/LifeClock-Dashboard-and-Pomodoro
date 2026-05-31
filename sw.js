@@ -4,6 +4,7 @@ const urlsToCache = [
   '/LifeClock-Dashboard-and-Pomodoro/',
   '/LifeClock-Dashboard-and-Pomodoro/index.html',
   '/LifeClock-Dashboard-and-Pomodoro/manifest.json'
+  '/LifeClock-Dashboard-and-Pomodoro/screenshots/splash.png'
 ];
 
 // Install event - cache files
