@@ -3500,6 +3500,10 @@ function showSplashScreen() {
   }
   
   const randomMessage = getRandomMessage();
+  let available = splashMessages.filter(m => m !== lastMessage);
+  let randomIndex = Math.floor(Math.random() * available.length);
+  lastMessage = available[randomIndex];
+  return lastMessage;
   
   splashDiv.innerHTML = `
     <div style="text-align: center; animation: fadeInUp 0.6s ease-out; padding: 0 40px;">
@@ -3558,10 +3562,6 @@ function showSplashScreen() {
   
   // Get random message for this launch
   const randomMessage = getRandomMessage() {
-  let available = splashMessages.filter(m => m !== lastMessage);
-  let randomIndex = Math.floor(Math.random() * available.length);
-  lastMessage = available[randomIndex];
-  return lastMessage;
   }
   
   // <!-- Splash screen image (contains your centered icon) -->
