@@ -3505,19 +3505,19 @@ function showSplashScreen() {
   lastMessage = available[randomIndex];
   return lastMessage;
   
-  splashDiv.innerHTML = `
+  splashDiv.innerHTML =
     <div style="text-align: center; animation: fadeInUp 0.6s ease-out; padding: 0 40px;">
-      <!-- Your splash screen image (icon already centered in the image) -->
+      // <!-- Your splash screen image (icon already centered in the image) -->
       <img src="/LifeClock-Dashboard-and-Pomodoro/screenshots/splash.png" 
            alt="Life Clock" 
            style="width: 180px; height: auto; margin-bottom: 40px;">
       
-      <!-- Scripture message below the icon -->
+      // <!-- Scripture message below the icon -->
       <p style="color: #a78bfa; font-size: 18px; line-height: 1.5; margin-bottom: 60px; font-family: system-ui; max-width: 80%; margin-left: auto; margin-right: auto;">
         ${randomMessage}
       </p>
       
-      <!-- Loading dots -->
+      // <!-- Loading dots -->
       <div style="display: flex; gap: 12px; justify-content: center;">
         <div style="width: 8px; height: 8px; background: rgba(255,255,255,0.3); border-radius: 50%; animation: pulse 1s ease-in-out infinite;"></div>
         <div style="width: 8px; height: 8px; background: rgba(255,255,255,0.3); border-radius: 50%; animation: pulse 1s ease-in-out infinite 0.2s;"></div>
@@ -3548,7 +3548,7 @@ function showSplashScreen() {
         }
       }
     </style>
-  `;
+  ;
   
   setTimeout(() => {
     splashDiv.style.opacity = '0';
@@ -3609,7 +3609,7 @@ function showSplashScreen() {
         }
       }
     </style>
-  `;
+  ;
   
   // Hide splash screen after 1.5 seconds or when app is ready
   setTimeout(() => {
