@@ -1,5 +1,5 @@
 {
-  "name": "LifeClock Dashboard",
+  "name": "LifeClock Dashboard & Pomodoro",
   "short_name": "LifeClock",
   "description": "Track your time, manage segments, and analyze productivity with heatmaps",
   "start_url": "/LifeClock-Dashboard-and-Pomodoro/.html",
