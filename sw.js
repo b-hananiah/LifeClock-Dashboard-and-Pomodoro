@@ -1,7 +1,7 @@
 // Service Worker for Life Clock PWA
 const CACHE_NAME = 'life-clock-v7';
 const urlsToCache = [
-    '/',  // Your HTML file
+    '/index.html',  // Your HTML file
 './manifest.json'
 ];
 
