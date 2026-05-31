@@ -1,8 +1,9 @@
 // Service Worker for Life Clock PWA
 const CACHE_NAME = 'life-clock-v7';
 const urlsToCache = [
-    '/index.html',  // Your HTML file
-'./manifest.json'
+  '/LifeClock-Dashboard-and-Pomodoro/',
+  '/LifeClock-Dashboard-and-Pomodoro/index.html',
+  '/LifeClock-Dashboard-and-Pomodoro/manifest.json'
 ];
 
 // Install event - cache files
