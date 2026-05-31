@@ -5,9 +5,11 @@
   "start_url": "/LifeClock-Dashboard-and-Pomodoro/",
   "scope": "/LifeClock-Dashboard-and-Pomodoro/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "theme_color": "#5c54db",
   "orientation": "any",
   "background_color": "#5c54db",
-  "theme_color": "#06051a",
+  
   "icons": [
     {
       "src": "/LifeClock-Dashboard-and-Pomodoro/icons/icon-48x48.png",
