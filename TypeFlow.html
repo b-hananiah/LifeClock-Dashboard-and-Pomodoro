@@ -1,0 +1,2034 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TypeFlow</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --ease:0.15s ease;
+  --r:8px;--rs:4px;
+}
+
+[data-theme="dark"]{
+  --bg:#1e2023;--surface:#27292d;--elevated:#32353b;--border:#3d4046;
+  --text:#c8ccd5;--sub:#6e7280;--dim:#404450;
+  --accent:#4d84e8;--accent-bg:rgba(77,132,232,.13);
+  --correct:#6db680;--incorrect:#d95f5f;--extra:#a04040;
+  --caret:#4d84e8;--shadow:rgba(0,0,0,.35);
+}
+
+[data-theme="light"]{
+  --bg:#f0efea;--surface:#e8e7e2;--elevated:#dddcd7;--border:#c8c7c2;
+  --text:#2a2d35;--sub:#888c9a;--dim:#b8bbc8;
+  --accent:#2d68cc;--accent-bg:rgba(45,104,204,.1);
+  --correct:#2a7a3c;--incorrect:#b52828;--extra:#801818;
+  --caret:#2d68cc;--shadow:rgba(0,0,0,.12);
+}
+
+html,body{height:100%}
+
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'Outfit',sans-serif;font-size:16px;
+  transition:background var(--ease),color var(--ease);
+  min-height:100vh;display:flex;flex-direction:column;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── HEADER ─────────────────────────────────────────── */
+#header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px 48px;max-width:1100px;width:100%;margin:0 auto;
+}
+.logo{
+  font-family:'JetBrains Mono',monospace;font-size:1.4rem;
+  font-weight:400;color:var(--accent);letter-spacing:-.02em;
+  cursor:default;user-select:none;
+}
+.logo em{color:var(--sub);font-style:normal}
+.hdr-right{display:flex;gap:6px;align-items:center}
+
+.icon-btn{
+  background:none;border:none;cursor:pointer;color:var(--sub);
+  padding:8px;border-radius:var(--rs);transition:color var(--ease),background var(--ease);
+  display:flex;align-items:center;justify-content:center;
+}
+.icon-btn:hover{color:var(--text);background:var(--elevated)}
+.icon-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* ── MAIN ────────────────────────────────────────────── */
+#main{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:0 48px 48px;
+  max-width:1100px;width:100%;margin:0 auto;
+}
+
+/* ── CONFIG BAR ─────────────────────────────────────── */
+#config-bar{
+  display:flex;align-items:center;gap:2px;
+  background:var(--surface);border-radius:100px;
+  padding:5px 8px;margin-bottom:44px;user-select:none;
+  flex-wrap:wrap;justify-content:center;
+}
+.cfg-sep{width:1px;height:14px;background:var(--border);margin:0 6px;opacity:.7}
+.cfg-btn{
+  background:none;border:none;cursor:pointer;color:var(--sub);
+  font-family:'Outfit',sans-serif;font-size:.82rem;font-weight:500;
+  padding:6px 14px;border-radius:100px;transition:all var(--ease);white-space:nowrap;
+  display:flex;align-items:center;gap:5px;
+}
+.cfg-btn:hover{color:var(--text);background:var(--elevated)}
+.cfg-btn.active{color:var(--accent);background:var(--accent-bg)}
+.cfg-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* ── TYPING ZONE ─────────────────────────────────────── */
+#typing-zone{width:100%;max-width:920px;position:relative;cursor:text}
+
+/* Live stats row */
+#live-stats{
+  display:flex;gap:28px;margin-bottom:18px;
+  height:44px;align-items:flex-end;
+  opacity:0;transition:opacity .2s;
+}
+#live-stats.show{opacity:1}
+.live-s{display:flex;flex-direction:column;align-items:flex-start;line-height:1}
+.live-val{
+  font-family:'JetBrains Mono',monospace;font-size:1.85rem;
+  font-weight:300;color:var(--accent);line-height:1;
+}
+.live-lbl{font-size:.68rem;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;margin-top:3px}
+#timer-display{
+  font-family:'JetBrains Mono',monospace;font-size:2.4rem;
+  font-weight:300;color:var(--accent);line-height:1;
+}
+
+/* Words wrapper + display */
+#words-wrap{
+  height:160px;overflow:hidden;position:relative;
+  margin-bottom:12px;
+  mask-image:linear-gradient(to bottom,transparent 0%,black 8%,black 88%,transparent 100%);
+  -webkit-mask-image:linear-gradient(to bottom,transparent 0%,black 8%,black 88%,transparent 100%);
+}
+
+#words{
+  display:flex;flex-wrap:wrap;gap:.35em .65em;
+  font-family:'JetBrains Mono',monospace;font-size:1.42rem;
+  line-height:1.65;transition:transform .22s cubic-bezier(.4,0,.2,1);
+  padding-top:2px;
+}
+
+.word{display:inline-flex;position:relative}
+.ch{
+  color:var(--dim);transition:color .04s;
+  display:inline-block;position:relative;
+}
+.ch.ok{color:var(--correct)}
+.ch.bad{color:var(--incorrect)}
+.ch.extra{color:var(--extra);text-decoration:underline;text-decoration-color:var(--extra)}
+.word.error-word{border-bottom:2px solid var(--incorrect);border-bottom-left-radius:1px;border-bottom-right-radius:1px}
+
+/* Caret */
+#caret{
+  position:absolute;width:2.5px;background:var(--caret);
+  border-radius:2px;z-index:10;pointer-events:none;
+  transition:left .06s cubic-bezier(.4,0,.2,1),top .14s cubic-bezier(.4,0,.2,1);
+  animation:blink 1.05s ease infinite;
+}
+#caret.typing{animation:none;opacity:1}
+@keyframes blink{0%,40%{opacity:1}55%,100%{opacity:0}}
+
+/* Focus overlay */
+#focus-overlay{
+  position:absolute;inset:0;display:flex;align-items:center;
+  justify-content:center;background:var(--bg);
+  opacity:0;pointer-events:none;transition:opacity .2s;z-index:20;
+  border-radius:var(--r);
+}
+#focus-overlay.show{opacity:.96;pointer-events:auto}
+.focus-msg{display:flex;align-items:center;gap:8px;color:var(--sub);font-size:.88rem}
+.focus-msg svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* Hidden input */
+#inp{position:absolute;opacity:0;width:1px;height:1px;top:0;left:0;pointer-events:none;caret-color:transparent}
+
+/* Bottom bar */
+#bottom-bar{
+  display:flex;align-items:center;justify-content:center;
+  gap:20px;margin-top:6px;
+}
+#btn-restart{
+  background:none;border:none;cursor:pointer;color:var(--sub);
+  font-family:'Outfit',sans-serif;font-size:.82rem;font-weight:500;
+  padding:8px 16px;border-radius:100px;transition:all var(--ease);
+  display:flex;align-items:center;gap:7px;
+}
+#btn-restart:hover{color:var(--text);background:var(--elevated)}
+#btn-restart svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.hint{font-size:.74rem;color:var(--dim)}
+
+/* Word-mode progress bar */
+#word-progress-bar{
+  width:100%;height:2px;background:var(--elevated);
+  border-radius:2px;margin-bottom:12px;
+  opacity:0;transition:opacity .2s;
+}
+#word-progress-fill{
+  height:100%;background:var(--accent);border-radius:2px;
+  width:0%;transition:width .1s;
+}
+#word-progress-bar.show{opacity:1}
+
+/* ── RESULTS ─────────────────────────────────────────── */
+#results{
+  display:none;width:100%;max-width:920px;
+  animation:fadeUp .3s ease;
+}
+#results.show{display:block}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+
+.res-top{display:flex;gap:32px;margin-bottom:28px;align-items:flex-end;flex-wrap:wrap}
+
+.res-primary{display:flex;flex-direction:column}
+.res-big{
+  font-family:'JetBrains Mono',monospace;font-size:5.5rem;
+  font-weight:300;color:var(--accent);line-height:1;
+}
+.res-big-lbl{
+  font-size:.78rem;color:var(--sub);text-transform:uppercase;
+  letter-spacing:.1em;margin-top:6px;
+}
+
+.res-stats{display:flex;flex-direction:column;justify-content:flex-end;gap:10px}
+.res-row{display:flex;gap:28px;flex-wrap:wrap}
+.res-stat{display:flex;flex-direction:column}
+.res-val{
+  font-family:'JetBrains Mono',monospace;font-size:1.6rem;
+  font-weight:300;color:var(--text);line-height:1;
+}
+.res-lbl{font-size:.7rem;color:var(--sub);text-transform:uppercase;letter-spacing:.06em;margin-top:4px}
+.res-val .acc-chars{font-size:.85rem;color:var(--sub)}
+
+/* chart */
+#chart-wrap{
+  position:relative;height:170px;width:100%;
+  margin-bottom:24px;background:var(--surface);
+  border-radius:var(--r);padding:16px 16px 8px;
+}
+
+/* actions */
+.res-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+.btn{
+  padding:10px 24px;border-radius:100px;border:none;cursor:pointer;
+  font-family:'Outfit',sans-serif;font-size:.86rem;font-weight:500;
+  transition:all var(--ease);display:flex;align-items:center;gap:8px;
+}
+.btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{filter:brightness(1.1)}
+.btn-secondary{background:var(--elevated);color:var(--text)}
+.btn-secondary:hover{background:var(--border)}
+.btn-ghost{background:none;color:var(--sub);border:1px solid var(--border)}
+.btn-ghost:hover{color:var(--text);background:var(--elevated)}
+
+/* ── DIVIDER ─────────────────────────────────────────── */
+.divider{height:1px;background:var(--border);margin:40px 0;width:100%;max-width:920px}
+
+/* ── LEADERBOARD ─────────────────────────────────────── */
+#leaderboard{width:100%;max-width:920px;padding-bottom:60px}
+.lb-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:16px;
+}
+.lb-title{
+  font-size:.78rem;font-weight:600;color:var(--sub);
+  text-transform:uppercase;letter-spacing:.12em;
+  display:flex;align-items:center;gap:8px;
+}
+.lb-title svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.lb-acts{display:flex;gap:8px}
+
+.lb-filters{
+  display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap;
+}
+.lb-filter{
+  background:none;border:1px solid var(--border);cursor:pointer;
+  color:var(--sub);font-family:'Outfit',sans-serif;
+  font-size:.76rem;font-weight:500;padding:4px 12px;
+  border-radius:100px;transition:all var(--ease);
+}
+.lb-filter:hover{color:var(--text);border-color:var(--text)}
+.lb-filter.active{color:var(--accent);border-color:var(--accent);background:var(--accent-bg)}
+
+table.lb-table{width:100%;border-collapse:collapse;font-size:.86rem}
+.lb-table th{
+  text-align:left;padding:8px 12px;color:var(--sub);
+  font-weight:500;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;
+  border-bottom:1px solid var(--border);cursor:pointer;user-select:none;
+  white-space:nowrap;transition:color var(--ease);
+}
+.lb-table th:hover{color:var(--text)}
+.lb-table th.sorted{color:var(--accent)}
+.lb-table th .sort-arrow{margin-left:4px;opacity:.6;font-size:.7rem}
+.lb-table td{
+  padding:10px 12px;border-bottom:1px solid var(--border);
+  font-family:'JetBrains Mono',monospace;font-size:.84rem;color:var(--text);
+}
+.lb-table td.lbl{font-family:'Outfit',sans-serif;color:var(--sub);font-size:.84rem}
+.lb-table tr:last-child td{border-bottom:none}
+.lb-table tbody tr{transition:background var(--ease)}
+.lb-table tbody tr:hover{background:var(--surface)}
+.lb-table tbody tr.new{animation:rowhl 2.5s ease forwards}
+@keyframes rowhl{0%{background:var(--accent-bg)}100%{background:transparent}}
+
+.rank{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:22px;height:22px;border-radius:50%;font-size:.72rem;
+  font-family:'Outfit',sans-serif;font-weight:600;
+  background:var(--elevated);color:var(--sub);
+}
+.rank.g{background:rgba(212,175,55,.18);color:#c8a52a}
+.rank.s{background:rgba(180,180,180,.18);color:#999}
+.rank.b{background:rgba(180,120,60,.18);color:#a8723a}
+
+#lb-empty{
+  text-align:center;padding:40px;color:var(--dim);font-size:.86rem;
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+}
+#lb-empty svg{width:32px;height:32px;stroke:var(--dim);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+
+/* ── SETTINGS PANEL ──────────────────────────────────── */
+#settings-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:199;
+  opacity:0;pointer-events:none;transition:opacity .25s;
+}
+#settings-overlay.open{opacity:1;pointer-events:auto}
+
+#settings{
+  position:fixed;top:0;right:0;bottom:0;width:300px;
+  background:var(--surface);border-left:1px solid var(--border);
+  padding:28px 24px;z-index:200;
+  transform:translateX(100%);
+  transition:transform .25s cubic-bezier(.4,0,.2,1);
+  overflow-y:auto;
+}
+#settings.open{transform:translateX(0);box-shadow:-4px 0 24px var(--shadow)}
+
+.s-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:28px;
+}
+.s-title{font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--sub)}
+
+.s-section{margin-bottom:20px}
+.s-section-title{font-size:.7rem;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+
+.s-opt{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 0;border-bottom:1px solid var(--border);
+}
+.s-opt:last-child{border-bottom:none}
+.s-opt-label{font-size:.86rem;color:var(--text)}
+.s-opt-sub{font-size:.74rem;color:var(--sub);margin-top:2px}
+
+/* Toggle */
+.toggle{position:relative;width:38px;height:21px;cursor:pointer;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.tsl{
+  position:absolute;inset:0;background:var(--elevated);
+  border-radius:100px;transition:background var(--ease);
+}
+.tsl::before{
+  content:'';position:absolute;width:15px;height:15px;
+  left:3px;top:3px;background:var(--sub);border-radius:50%;
+  transition:transform var(--ease),background var(--ease);
+}
+.toggle input:checked+.tsl{background:var(--accent-bg)}
+.toggle input:checked+.tsl::before{transform:translateX(17px);background:var(--accent)}
+
+/* Font-size picker */
+.size-btns{display:flex;gap:4px}
+.size-btn{
+  background:var(--elevated);border:none;cursor:pointer;color:var(--sub);
+  font-family:'Outfit',sans-serif;font-weight:500;
+  padding:4px 10px;border-radius:var(--rs);transition:all var(--ease);font-size:.8rem;
+}
+.size-btn.active{background:var(--accent-bg);color:var(--accent)}
+
+/* ── CAPS WARNING ────────────────────────────────────── */
+#caps{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:var(--elevated);color:var(--text);
+  padding:9px 18px;border-radius:var(--r);font-size:.8rem;
+  display:flex;align-items:center;gap:8px;
+  opacity:0;pointer-events:none;transition:opacity var(--ease);
+  z-index:300;border:1px solid var(--border);
+  box-shadow:0 4px 16px var(--shadow);
+}
+#caps.show{opacity:1}
+
+/* ── TOAST ───────────────────────────────────────────── */
+#toast{
+  position:fixed;bottom:24px;right:24px;
+  background:var(--elevated);color:var(--text);
+  padding:11px 20px;border-radius:var(--r);font-size:.84rem;
+  box-shadow:0 4px 20px var(--shadow);border:1px solid var(--border);
+  z-index:400;opacity:0;transform:translateY(8px);
+  transition:all .18s ease;pointer-events:none;
+}
+#toast.show{opacity:1;transform:translateY(0)}
+
+/* ── RESPONSIVE ──────────────────────────────────────── */
+@media(max-width:768px){
+  #header{padding:16px 20px}
+  #main{padding:0 20px 32px}
+  #words{font-size:1.1rem}
+  #words-wrap{height:128px}
+  .res-big{font-size:3.8rem}
+  #settings{width:280px}
+  #leaderboard{display:none}
+  .divider{display:none}
+  .hint{display:none}
+}
+@media(max-width:480px){
+  #config-bar{gap:0;padding:4px 6px}
+  .cfg-btn{padding:6px 10px;font-size:.76rem}
+}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--sub)}
+
+/* Font size variants */
+[data-fs="small"] #words{font-size:1.15rem}
+[data-fs="small"] #words-wrap{height:140px}
+[data-fs="medium"] #words{font-size:1.42rem}
+[data-fs="medium"] #words-wrap{height:160px}
+[data-fs="large"] #words{font-size:1.75rem}
+[data-fs="large"] #words-wrap{height:190px}
+
+/* Smooth caret variants */
+[data-caret="block"] #caret{width:0.6em;background:var(--accent-bg);border:2px solid var(--caret);border-radius:2px}
+[data-caret="under"] #caret{bottom:0;height:2px!important;transform:translateY(100%)}
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div id="header">
+  <div class="logo">type<em>flow</em></div>
+  <div class="hdr-right">
+    <button class="icon-btn" id="btn-theme" title="Toggle theme">
+      <svg id="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      <svg id="icon-moon" viewBox="0 0 24 24" style="display:none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <button class="icon-btn" id="btn-settings" title="Settings">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div id="main">
+
+  <!-- CONFIG BAR -->
+  <div id="config-bar">
+    <button class="cfg-btn active" data-mode="time">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>time
+    </button>
+    <button class="cfg-btn" data-mode="words">
+      <svg viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="14" y2="18"/></svg>words
+    </button>
+    <div class="cfg-sep"></div>
+    <div id="time-opts">
+      <button class="cfg-btn" data-time="15">15</button>
+      <button class="cfg-btn" data-time="30">30</button>
+      <button class="cfg-btn active" data-time="60">60</button>
+      <button class="cfg-btn" data-time="120">120</button>
+    </div>
+    <div id="word-opts" style="display:none">
+      <button class="cfg-btn" data-words="10">10</button>
+      <button class="cfg-btn active" data-words="25">25</button>
+      <button class="cfg-btn" data-words="50">50</button>
+      <button class="cfg-btn" data-words="100">100</button>
+    </div>
+    <div class="cfg-sep"></div>
+    <button class="cfg-btn" id="toggle-nums" title="Include numbers">
+      <svg viewBox="0 0 24 24"><path d="M4 9l2-2v11M9 15h3a2 2 0 0 0 0-4h-3v-2h3a2 2 0 0 0 2-2 2 2 0 0 0-2-2H9M17 9h4l-4 7h4"/></svg>
+    </button>
+    <button class="cfg-btn" id="toggle-punct" title="Include punctuation">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="19" r="2"/><path d="M12 5v10"/></svg>
+    </button>
+  </div>
+
+  <!-- TYPING ZONE -->
+  <div id="typing-zone">
+    <!-- Live stats -->
+    <div id="live-stats">
+      <div class="live-s" id="ls-wpm">
+        <span class="live-val" id="lv-wpm">—</span>
+        <span class="live-lbl">wpm</span>
+      </div>
+      <div class="live-s" id="ls-acc">
+        <span class="live-val" id="lv-acc">—</span>
+        <span class="live-lbl">acc</span>
+      </div>
+      <div class="live-s" id="ls-timer">
+        <span id="timer-display">60</span>
+        <span class="live-lbl" id="timer-lbl">sec</span>
+      </div>
+    </div>
+
+    <!-- Word progress bar (words mode) -->
+    <div id="word-progress-bar"><div id="word-progress-fill"></div></div>
+
+    <!-- Words wrapper -->
+    <div id="words-wrap">
+      <div id="words"></div>
+      <div id="caret"></div>
+      <div id="focus-overlay" class="show">
+        <span class="focus-msg">
+          <svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M13 12H3"/></svg>
+          click here to start typing
+        </span>
+      </div>
+    </div>
+
+    <input type="text" id="inp" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="-1">
+
+    <!-- Bottom bar -->
+    <div id="bottom-bar">
+      <button id="btn-restart">
+        <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
+        restart
+      </button>
+      <span class="hint">tab — restart &nbsp;·&nbsp; esc — cancel</span>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results">
+    <div class="res-top">
+      <div class="res-primary">
+        <div class="res-big" id="r-wpm">—</div>
+        <div class="res-big-lbl">wpm</div>
+      </div>
+      <div class="res-stats">
+        <div class="res-row">
+          <div class="res-stat">
+            <div class="res-val" id="r-acc">—</div>
+            <div class="res-lbl">accuracy</div>
+          </div>
+          <div class="res-stat">
+            <div class="res-val" id="r-raw">—</div>
+            <div class="res-lbl">raw</div>
+          </div>
+          <div class="res-stat">
+            <div class="res-val" id="r-cons">—</div>
+            <div class="res-lbl">consistency</div>
+          </div>
+        </div>
+        <div class="res-row">
+          <div class="res-stat">
+            <div class="res-val" id="r-chars">—</div>
+            <div class="res-lbl">characters</div>
+          </div>
+          <div class="res-stat">
+            <div class="res-val" id="r-errors">—</div>
+            <div class="res-lbl">errors</div>
+          </div>
+          <div class="res-stat">
+            <div class="res-val" id="r-time">—</div>
+            <div class="res-lbl">time</div>
+          </div>
+          <div class="res-stat">
+            <div class="res-val" id="r-burst">—</div>
+            <div class="res-lbl">burst</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div id="chart-wrap">
+      <canvas id="result-chart"></canvas>
+    </div>
+
+    <!-- Actions -->
+    <div class="res-actions">
+      <button class="btn btn-primary" id="r-again">
+        <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
+        try again
+      </button>
+      <button class="btn btn-secondary" id="r-new">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        new test
+      </button>
+      <button class="btn btn-ghost" id="r-save">
+        <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        save
+      </button>
+      <button class="btn btn-ghost" id="r-export">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        export png
+      </button>
+    </div>
+  </div>
+
+  <!-- Divider + Leaderboard -->
+  <div class="divider" id="lb-divider"></div>
+  <div id="leaderboard">
+    <div class="lb-hdr">
+      <div class="lb-title">
+        <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        leaderboard
+      </div>
+      <div class="lb-acts">
+        <button class="btn btn-ghost" id="lb-clear" style="padding:6px 14px;font-size:.76rem">clear all</button>
+      </div>
+    </div>
+    <div class="lb-filters">
+      <button class="lb-filter active" data-lb-filter="all">all</button>
+      <button class="lb-filter" data-lb-filter="time 15">15s</button>
+      <button class="lb-filter" data-lb-filter="time 30">30s</button>
+      <button class="lb-filter" data-lb-filter="time 60">60s</button>
+      <button class="lb-filter" data-lb-filter="time 120">120s</button>
+      <button class="lb-filter" data-lb-filter="words 10">10w</button>
+      <button class="lb-filter" data-lb-filter="words 25">25w</button>
+      <button class="lb-filter" data-lb-filter="words 50">50w</button>
+      <button class="lb-filter" data-lb-filter="words 100">100w</button>
+    </div>
+    <div id="lb-body">
+      <div id="lb-empty">
+        <svg viewBox="0 0 24 24"><path d="M3 3h18v4H3zM3 10h18v4H3zM3 17h10v4H3z"/></svg>
+        no results yet — complete a test to see your scores here
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- CAPS LOCK WARNING -->
+<div id="caps">⇪ caps lock is on</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- SETTINGS PANEL -->
+<div id="settings-overlay"></div>
+<div id="settings">
+  <div class="s-hdr">
+    <span class="s-title">settings</span>
+    <button class="icon-btn" id="close-settings">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+
+  <div class="s-section">
+    <div class="s-section-title">appearance</div>
+    <div class="s-opt">
+      <div>
+        <div class="s-opt-label">theme</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="size-btn" id="s-dark">dark</button>
+        <button class="size-btn" id="s-light">light</button>
+      </div>
+    </div>
+    <div class="s-opt">
+      <div>
+        <div class="s-opt-label">font size</div>
+      </div>
+      <div class="size-btns">
+        <button class="size-btn" data-fs="small">S</button>
+        <button class="size-btn active" data-fs="medium">M</button>
+        <button class="size-btn" data-fs="large">L</button>
+      </div>
+    </div>
+    <div class="s-opt">
+      <div>
+        <div class="s-opt-label">caret style</div>
+      </div>
+      <div class="size-btns">
+        <button class="size-btn active" data-cs="line">|</button>
+        <button class="size-btn" data-cs="block">▌</button>
+        <button class="size-btn" data-cs="under">_</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="s-section">
+    <div class="s-section-title">behaviour</div>
+    <div class="s-opt">
+      <div>
+        <div class="s-opt-label">smooth caret</div>
+        <div class="s-opt-sub">animate caret movement</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="s-smooth" checked>
+        <span class="tsl"></span>
+      </label>
+    </div>
+    <div class="s-opt">
+      <div>
+        <div class="s-opt-label">live wpm</div>
+        <div class="s-opt-sub">show wpm while typing</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="s-livewpm" checked>
+        <span class="tsl"></span>
+      </label>
+    </div>
+    <div class="s-opt">
+      <div>
+        <div class="s-opt-label">sound effects</div>
+        <div class="s-opt-sub">click on keypress</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="s-sound">
+        <span class="tsl"></span>
+      </label>
+    </div>
+    <div class="s-opt">
+      <div>
+        <div class="s-opt-label">stop on error</div>
+        <div class="s-opt-sub">require correction before continuing</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="s-strict">
+        <span class="tsl"></span>
+      </label>
+    </div>
+    <div class="s-opt">
+      <div>
+        <div class="s-opt-label">blind mode</div>
+        <div class="s-opt-sub">hide errors while typing</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="s-blind">
+        <span class="tsl"></span>
+      </label>
+    </div>
+  </div>
+
+  <div class="s-section">
+    <div class="s-section-title">about</div>
+    <div style="font-size:.8rem;color:var(--sub);line-height:1.6;padding:8px 0">
+      TypeFlow · offline-ready typing practice<br>
+      inspired by monkeytype.com<br>
+      <br>
+      <span style="color:var(--dim)">data stored in localStorage</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  WORD LIST  (Google 10k top ~600, clean, no 1-2 char)
+// ═══════════════════════════════════════════════════════
+const ALL_WORDS = [
+  "i", "a", "the", "be", "to", "of", "and", "in", "that", "have",
+  "it", "for", "not", "on", "with", "he", "as", "you", "do", "at",
+  "this", "but", "his", "by", "from", "they", "we", "say", "her", "she",
+  "or", "an", "will", "my", "one", "all", "would", "there", "their", "what",
+  "so", "up", "out", "if", "about", "who", "get", "which", "go", "me",
+  "when", "make", "can", "like", "time", "no", "just", "him", "know", "take",
+  "people", "into", "year", "your", "good", "some", "could", "them", "see", "other",
+  "than", "then", "now", "look", "only", "come", "its", "over", "think", "also",
+  "back", "after", "use", "two", "how", "our", "work", "first", "well", "way",
+  "even", "new", "want", "because", "any", "these", "give", "day", "most", "us",
+  "great", "between", "need", "large", "often", "hand", "high", "place", "hold", "turn",
+  "here", "why", "ask", "men", "read", "land", "different", "home", "move", "try",
+  "kind", "spell", "add", "air", "along", "change", "animal", "house", "point", "page",
+  "letter", "mother", "answer", "found", "study", "still", "learn", "should", "world", "school",
+  "plant", "cover", "food", "sun", "four", "state", "keep", "eye", "never", "last",
+  "let", "thought", "city", "tree", "cross", "farm", "hard", "start", "might", "story",
+  "saw", "far", "sea", "draw", "left", "late", "run", "while", "press", "close",
+  "night", "real", "life", "few", "north", "open", "seem", "together", "next", "white",
+  "children", "begin", "got", "walk", "example", "ease", "paper", "group", "always", "music",
+  "those", "both", "mark", "until", "mile", "river", "car", "feet", "care", "second",
+  "book", "carry", "took", "science", "eat", "room", "friend", "began", "idea", "fish",
+  "mountain", "stop", "once", "base", "hear", "horse", "cut", "sure", "watch", "color",
+  "face", "wood", "main", "enough", "plain", "girl", "usual", "young", "ready", "above",
+  "ever", "red", "list", "though", "feel", "talk", "bird", "soon", "body", "dog",
+  "family", "direct", "leave", "song", "measure", "door", "product", "black", "short", "class",
+  "wind", "question", "happen", "complete", "ship", "area", "half", "rock", "order", "fire",
+  "south", "problem", "piece", "told", "knew", "pass", "since", "top", "whole", "king",
+  "space", "heard", "best", "hour", "better", "true", "during", "hundred", "five", "remember",
+  "step", "early", "west", "ground", "interest", "reach", "fast", "sing", "listen", "six",
+  "table", "travel", "less", "morning", "ten", "simple", "several", "toward", "war", "lay",
+  "against", "pattern", "slow", "center", "love", "person", "money", "serve", "appear", "road",
+  "map", "rain", "rule", "pull", "cold", "notice", "voice", "unit", "power", "town",
+  "fine", "fall", "lead", "cry", "dark", "machine", "note", "wait", "plan", "figure",
+  "star", "box", "field", "rest", "correct", "able", "pound", "done", "stood", "contain",
+  "front", "teach", "week", "final", "gave", "green", "quick", "develop", "ocean", "warm",
+  "free", "minute", "strong", "special", "mind", "behind", "clear", "tail", "produce", "fact",
+  "street", "inch", "nothing", "course", "stay", "wheel", "full", "force", "blue", "object",
+  "decide", "surface", "deep", "moon", "island", "foot", "system", "busy", "test", "record",
+  "boat", "common", "gold", "possible", "plane", "dry", "wonder", "laugh", "thousand", "ago",
+  "ran", "check", "game", "shape", "hot", "miss", "brought", "heat", "snow", "bring",
+  "distant", "fill", "east", "paint", "language", "among", "grand", "ball", "yet", "wave",
+  "drop", "heart", "present", "heavy", "dance", "engine", "position", "arm", "wide", "sail",
+  "material", "size", "vary", "settle", "speak", "weight", "general", "ice", "matter", "circle",
+  "pair", "include", "divide", "syllable", "felt", "perhaps", "pick", "sudden", "count", "square",
+  "reason", "length", "represent", "art", "subject", "region", "energy", "hunt", "bed", "brother",
+  "egg", "ride", "cell", "believe", "fraction", "forest", "sit", "race", "window", "store",
+  "summer", "train", "sleep", "prove", "leg", "wall", "catch", "mount", "wish", "sky",
+  "board", "joy", "winter", "written", "wild", "instrument", "kept", "glass", "grass", "cow",
+  "job", "edge", "sign", "visit", "past", "soft", "fun", "bright", "gas", "weather",
+  "month", "million", "bear", "finish", "happy", "hope", "flower", "strange", "gone", "jump",
+  "baby", "eight", "village", "meet", "root", "buy", "raise", "solve", "metal", "push",
+  "seven", "third", "shall", "held", "hair", "describe", "cook", "floor", "either", "result",
+  "burn", "hill", "safe", "cat", "century", "consider", "type", "law", "bit", "coast",
+  "copy", "phrase", "silent", "tall", "sand", "soil", "roll", "temperature", "finger", "industry",
+  "value", "fight", "lie", "beat", "natural", "view", "sense", "ear", "else", "quite",
+  "broke", "case", "middle", "kill", "son", "lake", "moment", "scale", "loud", "spring",
+  "observe", "child", "straight", "nation", "dictionary", "milk", "speed", "method", "organ", "pay",
+  "age", "section", "dress", "cloud", "surprise", "quiet", "stone", "tiny", "climb", "cool",
+  "design", "poor", "lot", "experiment", "bottom", "key", "iron", "single", "stick", "flat",
+  "twenty", "skin", "smile", "hole", "trade", "melody", "trip", "office", "receive", "row",
+  "mouth", "exact", "symbol", "die", "least", "trouble", "shout", "except", "wrote", "seed",
+  "tone", "join", "suggest", "clean", "break", "lady", "yard", "rise", "bad", "blow",
+  "oil", "blood", "touch", "grew", "cent", "mix", "team", "wire", "cost", "lost",
+  "brown", "wear", "garden", "equal", "sent", "choose", "fell", "fit", "flow", "fair",
+  "bank", "collect", "save", "control", "gentle", "woman", "captain", "practice", "separate", "difficult",
+  "doctor", "please", "protect", "noon", "whose", "locate", "ring", "character", "insect", "caught",
+  "period", "indicate", "radio", "spoke", "atom", "human", "history", "effect", "electric", "expect",
+  "crop", "modern", "element", "hit", "student", "corner", "party", "supply", "bone", "rail",
+  "imagine", "provide", "agree", "capital", "chair", "danger", "fruit", "rich", "thick", "soldier",
+  "process", "operate", "guess", "necessary", "sharp", "wing", "create", "neighbor", "wash", "rather",
+  "crowd", "corn", "compare", "poem", "string", "bell", "depend", "meat", "rub", "tube",
+  "famous", "dollar", "stream", "fear", "sight", "thin", "triangle", "planet", "hurry", "chief",
+  "colony", "clock", "mine", "tie", "enter", "major", "fresh", "search", "send", "yellow",
+  "gun", "allow", "print", "dead", "spot", "desert", "suit", "current", "lift", "rose",
+  "continue", "block", "chart", "hat", "sell", "success", "company", "subtract", "event", "particular",
+  "deal", "swim", "term", "opposite", "wife", "shoe", "shoulder", "spread", "arrange", "camp",
+  "invent", "cotton", "born", "determine", "nine", "truck", "noise", "level", "chance", "gather",
+  "shop", "stretch", "throw", "shine", "property", "column", "molecule", "select", "wrong", "gray",
+  "repeat", "require", "broad", "prepare", "salt", "nose", "plural", "anger", "claim", "ability",
+  "accept", "access", "account", "achieve", "across", "act", "action", "activity", "actual", "address",
+  "adult", "advice", "afraid", "afternoon", "again", "ahead", "although", "amount", "angry", "announce",
+  "apart", "apply", "approach", "approve", "around", "arrive", "assist", "attach", "attempt", "attend",
+  "attitude", "attract", "audience", "available", "avoid", "aware", "background", "balance", "beautiful", "belief",
+  "beneath", "billion", "bother", "bridge", "brief", "build", "building", "burden", "business", "campus",
+  "careful", "cause", "celebrate", "certainly", "choice", "civil", "clearly", "concern", "confident", "contribute",
+  "creative", "culture", "customer", "damage", "death", "debate", "declare", "define", "deliver", "detail",
+  "difference", "discovery", "discuss", "disease", "display", "distance", "duty", "economic", "education", "effort",
+  "election", "employ", "enjoy", "ensure", "establish", "evidence", "exactly", "examine", "exist", "experience",
+  "explain", "express", "extend", "fail", "follow", "foreign", "forget", "form", "forward", "future",
+  "global", "goal", "growth", "guide", "health", "identify", "image", "impact", "improve", "increase",
+  "individual", "influence", "information", "institution", "international", "involve", "issue", "item", "judge", "justice",
+  "knowledge", "lack", "leadership", "local", "manage", "market", "media", "member", "message", "mission",
+  "model", "national", "particularly", "physical", "political", "professional", "quality", "recent", "recognize", "reduce",
+  "relate", "research", "respond", "return", "review", "risk", "role", "serious", "service", "share",
+  "society", "standard", "support", "television", "throughout", "trial", "trust", "understand", "various", "write",
+  "analysis", "appropriate", "article", "attention", "call", "card", "completely", "concept", "condition", "connect",
+  "crime", "cycle", "data", "decision", "department", "direction", "discover", "economy", "effective", "encourage",
+  "entire", "environment", "factor", "federal", "find", "government", "help", "line", "loss", "management",
+  "military", "news", "number", "occur", "organization", "original", "output", "patient", "policy", "positive",
+  "pressure", "previous", "price", "project", "public", "purpose", "rate", "regard", "remain", "series"
+];
+
+const NUMS = ["1","2","3","4","5","6","7","8","9","10","12","15","20","25","50","100","2024","2025","365","60","30","100"];
+const PUNCT = [",",".",";",":","?","!","'s","'t","'re","'ve"];
+
+// ═══════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════
+const S = {
+  mode: 'time', timeLimit: 60, wordCount: 25,
+  useNums: false, usePunct: false,
+  theme: 'dark', fontSize: 'medium', caretStyle: 'line',
+  smoothCaret: true, liveWpm: true, sound: false,
+  strict: false, blindMode: false,
+
+  words: [], typedWords: [], wordEls: [], charEls: [],
+  currentWord: 0, currentChar: 0,
+  isRunning: false, isFinished: false, focused: false,
+
+  startTime: null, endTime: null,
+  timerInt: null, wpmInt: null,
+  timeLeft: 60,
+  wpmHistory: [], keystrokeHistory: [],
+  totalKeys: 0, correctKeys: 0, totalErrors: 0,
+  scrollOffset: 0,
+
+  results: null,
+  leaderboard: [],
+  lbSort: 'wpm', lbDir: -1, lbFilter: 'all',
+  resultChart: null,
+  newEntryId: null,
+};
+
+// ═══════════════════════════════════════════════════════
+//  SETTINGS LOAD/SAVE
+// ═══════════════════════════════════════════════════════
+function loadSettings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('tf_settings') || '{}');
+    if (saved.theme) S.theme = saved.theme;
+    if (saved.fontSize) S.fontSize = saved.fontSize;
+    if (saved.caretStyle) S.caretStyle = saved.caretStyle;
+    if (typeof saved.smoothCaret === 'boolean') S.smoothCaret = saved.smoothCaret;
+    if (typeof saved.liveWpm === 'boolean') S.liveWpm = saved.liveWpm;
+    if (typeof saved.sound === 'boolean') S.sound = saved.sound;
+    if (typeof saved.strict === 'boolean') S.strict = saved.strict;
+    if (typeof saved.blindMode === 'boolean') S.blindMode = saved.blindMode;
+    if (saved.mode) S.mode = saved.mode;
+    if (saved.timeLimit) S.timeLimit = saved.timeLimit;
+    if (saved.wordCount) S.wordCount = saved.wordCount;
+    S.leaderboard = JSON.parse(localStorage.getItem('tf_leaderboard') || '[]');
+  } catch(e) {}
+}
+
+function saveSettings() {
+  try {
+    localStorage.setItem('tf_settings', JSON.stringify({
+      theme: S.theme, fontSize: S.fontSize, caretStyle: S.caretStyle,
+      smoothCaret: S.smoothCaret, liveWpm: S.liveWpm, sound: S.sound,
+      strict: S.strict, blindMode: S.blindMode, mode: S.mode,
+      timeLimit: S.timeLimit, wordCount: S.wordCount
+    }));
+  } catch(e) {}
+}
+
+function saveLeaderboard() {
+  try { localStorage.setItem('tf_leaderboard', JSON.stringify(S.leaderboard)); } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════════
+//  DOM REFS
+// ═══════════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+const wordsEl = $('words');
+const wrapEl = $('words-wrap');
+const caretEl = $('caret');
+const inpEl = $('inp');
+const focusOvEl = $('focus-overlay');
+const liveStatsEl = $('live-stats');
+const timerEl = $('timer-display');
+const lTimerLbl = $('timer-lbl');
+const lvWpmEl = $('lv-wpm');
+const lvAccEl = $('lv-acc');
+const wProgressBar = $('word-progress-bar');
+const wProgressFill = $('word-progress-fill');
+
+// ═══════════════════════════════════════════════════════
+//  APPLY SETTINGS TO DOM
+// ═══════════════════════════════════════════════════════
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', S.theme);
+  $('icon-sun').style.display = S.theme === 'dark' ? 'block' : 'none';
+  $('icon-moon').style.display = S.theme === 'light' ? 'block' : 'none';
+  $('s-dark').classList.toggle('active', S.theme === 'dark');
+  $('s-light').classList.toggle('active', S.theme === 'light');
+}
+
+function applyFontSize() {
+  document.documentElement.setAttribute('data-fs', S.fontSize);
+  document.querySelectorAll('[data-fs]').forEach(b => {
+    b.classList.toggle('active', b.dataset.fs === S.fontSize);
+  });
+}
+
+function applyCaretStyle() {
+  document.documentElement.setAttribute('data-caret', S.caretStyle);
+  document.querySelectorAll('[data-cs]').forEach(b => {
+    b.classList.toggle('active', b.dataset.cs === S.caretStyle);
+  });
+}
+
+function applySmoothCaret() {
+  caretEl.style.transition = S.smoothCaret
+    ? 'left .06s cubic-bezier(.4,0,.2,1), top .14s cubic-bezier(.4,0,.2,1)'
+    : 'none';
+}
+
+function applyConfigUI() {
+  document.querySelectorAll('[data-mode]').forEach(b =>
+    b.classList.toggle('active', b.dataset.mode === S.mode));
+  $('time-opts').style.display = S.mode === 'time' ? '' : 'none';
+  $('word-opts').style.display = S.mode === 'words' ? '' : 'none';
+  document.querySelectorAll('[data-time]').forEach(b =>
+    b.classList.toggle('active', +b.dataset.time === S.timeLimit));
+  document.querySelectorAll('[data-words]').forEach(b =>
+    b.classList.toggle('active', +b.dataset.words === S.wordCount));
+  $('toggle-nums').classList.toggle('active', S.useNums);
+  $('toggle-punct').classList.toggle('active', S.usePunct);
+}
+
+function applySettingsUI() {
+  $('s-smooth').checked = S.smoothCaret;
+  $('s-livewpm').checked = S.liveWpm;
+  $('s-sound').checked = S.sound;
+  $('s-strict').checked = S.strict;
+  $('s-blind').checked = S.blindMode;
+}
+
+function applyAll() {
+  applyTheme(); applyFontSize(); applyCaretStyle();
+  applySmoothCaret(); applyConfigUI(); applySettingsUI();
+}
+
+// ═══════════════════════════════════════════════════════
+//  WORD GENERATION
+// ═══════════════════════════════════════════════════════
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function generateWords(count) {
+  const pool = shuffle(ALL_WORDS);
+  const words = [];
+  for (let i = 0; i < count; i++) {
+    let w = pool[i % pool.length];
+    if (S.usePunct && Math.random() < 0.12)
+      w += PUNCT[Math.floor(Math.random()*PUNCT.length)];
+    if (S.useNums && Math.random() < 0.1)
+      w = NUMS[Math.floor(Math.random()*NUMS.length)];
+    words.push(w);
+  }
+  return words;
+}
+
+// ═══════════════════════════════════════════════════════
+//  RENDER WORDS
+// ═══════════════════════════════════════════════════════
+function renderWords() {
+  wordsEl.innerHTML = '';
+  S.typedWords = S.words.map(() => []);
+  S.wordEls = [];
+  S.charEls = [];
+
+  S.words.forEach((word, wi) => {
+    const wEl = document.createElement('div');
+    wEl.className = 'word';
+    wEl.id = `w${wi}`;
+    const charRow = [];
+    word.split('').forEach((ch, ci) => {
+      const s = document.createElement('span');
+      s.className = 'ch';
+      s.id = `c${wi}_${ci}`;
+      s.textContent = ch;
+      wEl.appendChild(s);
+      charRow.push(s);
+    });
+    wordsEl.appendChild(wEl);
+    S.wordEls.push(wEl);
+    S.charEls.push(charRow);
+  });
+
+  S.scrollOffset = 0;
+  wordsEl.style.transform = 'translateY(0)';
+  updateCaret();
+}
+
+// ═══════════════════════════════════════════════════════
+//  CARET POSITIONING
+// ═══════════════════════════════════════════════════════
+function updateCaret() {
+  const wi = S.currentWord, ci = S.currentChar;
+  const wEl = S.wordEls[wi];
+  if (!wEl) return;
+
+  const wrapRect = wrapEl.getBoundingClientRect();
+
+  let targetEl = S.charEls[wi] && S.charEls[wi][ci];
+  let left, top, height;
+
+  if (targetEl) {
+    const r = targetEl.getBoundingClientRect();
+    left = r.left - wrapRect.left;
+    top = r.top - wrapRect.top;
+    height = r.height;
+  } else {
+    // At end of word — position after last char or extra char
+    const extras = wEl.querySelectorAll('.ch.extra');
+    const lastEl = extras.length
+      ? extras[extras.length-1]
+      : S.charEls[wi][S.charEls[wi].length-1];
+    if (lastEl) {
+      const r = lastEl.getBoundingClientRect();
+      left = r.right - wrapRect.left;
+      top = r.top - wrapRect.top;
+      height = r.height;
+    } else {
+      const r = wEl.getBoundingClientRect();
+      left = r.left - wrapRect.left;
+      top = r.top - wrapRect.top;
+      height = r.height;
+    }
+  }
+
+  caretEl.style.left = left + 'px';
+  caretEl.style.top = top + 'px';
+  caretEl.style.height = height + 'px';
+}
+
+// ═══════════════════════════════════════════════════════
+//  SCROLL MANAGEMENT
+// ═══════════════════════════════════════════════════════
+function updateScroll() {
+  const wEl = S.wordEls[S.currentWord];
+  if (!wEl || !S.wordEls[0]) return;
+
+  const rowGap = 10;
+  const lineH = S.wordEls[0].offsetHeight + rowGap;
+  const firstTop = S.wordEls[0].offsetTop;
+  const curTop = wEl.offsetTop;
+
+  const curLine = Math.round((curTop - firstTop) / lineH);
+
+  // Keep current word on line 1 (0-indexed): scroll when line >= 2
+  const targetScroll = Math.max(0, curLine - 1) * lineH;
+
+  if (Math.abs(targetScroll - S.scrollOffset) > 2) {
+    S.scrollOffset = targetScroll;
+    wordsEl.style.transform = `translateY(-${targetScroll}px)`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  WORD DISPLAY UPDATE
+// ═══════════════════════════════════════════════════════
+function updateWordDisplay(wi) {
+  const word = S.words[wi];
+  const typed = S.typedWords[wi];
+  const wEl = S.wordEls[wi];
+  if (!wEl) return;
+
+  const isBlind = S.blindMode;
+
+  // Update built-in chars
+  S.charEls[wi].forEach((charEl, ci) => {
+    charEl.className = 'ch';
+    if (ci < typed.length) {
+      if (!isBlind) {
+        charEl.classList.add(typed[ci] === word[ci] ? 'ok' : 'bad');
+      } else {
+        charEl.classList.add('ok'); // hide errors in blind mode
+      }
+    }
+  });
+
+  // Remove old extra chars
+  wEl.querySelectorAll('.ch.extra').forEach(e => e.remove());
+
+  // Add extra chars
+  if (typed.length > word.length) {
+    for (let i = word.length; i < typed.length; i++) {
+      const s = document.createElement('span');
+      s.className = 'ch extra';
+      s.textContent = typed[i];
+      wEl.appendChild(s);
+    }
+  }
+
+  // Error underline
+  if (!isBlind && typed.length > 0) {
+    const hasError = typed.some((c, i) => i < word.length && c !== word[i])
+      || typed.length > word.length;
+    wEl.classList.toggle('error-word', hasError && wi < S.currentWord);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  INIT / RESET TEST
+// ═══════════════════════════════════════════════════════
+function initTest() {
+  clearInterval(S.timerInt);
+  clearInterval(S.wpmInt);
+  S.isRunning = false;
+  S.isFinished = false;
+  S.currentWord = 0;
+  S.currentChar = 0;
+  S.totalKeys = 0;
+  S.correctKeys = 0;
+  S.totalErrors = 0;
+  S.startTime = null;
+  S.endTime = null;
+  S.wpmHistory = [];
+  S.keystrokeHistory = [];
+  S.scrollOffset = 0;
+
+  const count = S.mode === 'time' ? Math.max(200, S.timeLimit * 3) : S.wordCount;
+  S.words = generateWords(count);
+
+  S.timeLeft = S.timeLimit;
+  timerEl.textContent = S.mode === 'time' ? S.timeLimit : S.wordCount;
+  lTimerLbl.textContent = S.mode === 'time' ? 'sec' : 'words';
+
+  renderWords();
+
+  liveStatsEl.classList.remove('show');
+  lvWpmEl.textContent = '—';
+  lvAccEl.textContent = '—';
+
+  wProgressBar.classList.remove('show');
+  wProgressFill.style.width = '0%';
+
+  $('typing-zone').style.display = '';
+  $('results').classList.remove('show');
+
+  focusOvEl.classList.toggle('show', !S.focused);
+  caretEl.className = 'caret';
+
+  if (S.focused) inpEl.focus();
+  updateCaret();
+  renderLeaderboard();
+}
+
+// ═══════════════════════════════════════════════════════
+//  START TEST
+// ═══════════════════════════════════════════════════════
+function startTest() {
+  S.isRunning = true;
+  S.startTime = performance.now();
+  liveStatsEl.classList.add('show');
+
+  if (S.mode === 'words') {
+    wProgressBar.classList.add('show');
+  }
+
+  // Timer interval
+  if (S.mode === 'time') {
+    S.timerInt = setInterval(() => {
+      S.timeLeft--;
+      timerEl.textContent = S.timeLeft;
+
+      // Color warning
+      if (S.timeLeft <= 10) timerEl.style.color = 'var(--incorrect)';
+      else if (S.timeLeft <= 20) timerEl.style.color = 'var(--accent)';
+
+      if (S.timeLeft <= 0) finishTest();
+    }, 1000);
+  }
+
+  // WPM sampling interval
+  S.wpmInt = setInterval(() => {
+    if (!S.isRunning) return;
+    const elapsed = (performance.now() - S.startTime) / 60000;
+    if (elapsed < 0.01) return;
+
+    const correctChars = getCorrectChars();
+    const rawWpm = Math.round((S.totalKeys / 5) / elapsed);
+    const wpm = Math.max(0, Math.round((correctChars / 5) / elapsed));
+
+    S.wpmHistory.push({ t: Math.round((performance.now() - S.startTime) / 1000), wpm, raw: rawWpm });
+
+    if (S.liveWpm) lvWpmEl.textContent = wpm;
+    const acc = S.totalKeys > 0 ? Math.round((S.correctKeys / S.totalKeys) * 100) : 100;
+    lvAccEl.textContent = acc + '%';
+  }, 1000);
+}
+
+// ═══════════════════════════════════════════════════════
+//  KEYDOWN HANDLING
+// ═══════════════════════════════════════════════════════
+function handleKey(e) {
+  if (S.isFinished) return;
+
+  // Caps lock
+  if (e.getModifierState) {
+    const caps = e.getModifierState('CapsLock');
+    $('caps').classList.toggle('show', caps);
+  }
+
+  // Start on first printable key
+  if (!S.isRunning && e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+    startTest();
+  }
+
+  if (!S.isRunning && e.key !== ' ') return;
+
+  if (e.key === 'Backspace') {
+    e.preventDefault();
+    handleBackspace(e.ctrlKey);
+  } else if (e.key === ' ') {
+    e.preventDefault();
+    if (S.isRunning) handleSpace();
+  } else if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+    handleChar(e.key);
+  }
+
+  // Caret animation reset
+  caretEl.classList.add('typing');
+  clearTimeout(caretEl._bt);
+  caretEl._bt = setTimeout(() => caretEl.classList.remove('typing'), 800);
+}
+
+function handleChar(ch) {
+  const wi = S.currentWord, ci = S.currentChar;
+  const word = S.words[wi];
+  if (!word) return;
+
+  const typed = S.typedWords[wi];
+
+  // Limit extra chars
+  if (typed.length >= word.length + 10) return;
+
+  // Strict mode: must correct before advancing
+  if (S.strict) {
+    const hasError = typed.some((c, i) => i < word.length && c !== word[i]);
+    if (hasError) return;
+  }
+
+  // Play sound
+  if (S.sound) playClick(ci < word.length && ch === word[ci] ? 'ok' : 'err');
+
+  typed.push(ch);
+  S.totalKeys++;
+
+  const isCorrect = ci < word.length && ch === word[ci];
+  if (isCorrect) S.correctKeys++;
+  else S.totalErrors++;
+
+  S.keystrokeHistory.push({
+    t: performance.now() - (S.startTime || performance.now()),
+    correct: isCorrect, wi, ci
+  });
+
+  S.currentChar = typed.length;
+
+  updateWordDisplay(wi);
+  updateWordProgress();
+
+  // Words mode: auto-finish on last word's last char
+  if (S.mode === 'words' && wi === S.words.length - 1) {
+    // Check if all chars typed correctly and we're past word length
+    // We let user press space for consistency — but we auto-finish here
+    const allCorrect = typed.length === word.length && typed.every((c, i) => c === word[i]);
+    if (allCorrect) {
+      setTimeout(finishTest, 50);
+      return;
+    }
+  }
+
+  requestAnimationFrame(() => { updateCaret(); updateScroll(); });
+}
+
+function handleSpace() {
+  const wi = S.currentWord;
+  const word = S.words[wi];
+  const typed = S.typedWords[wi];
+
+  // Don't advance on empty
+  if (typed.length === 0) return;
+
+  updateWordDisplay(wi);
+
+  S.currentWord++;
+  S.currentChar = 0;
+
+  // End in words mode
+  if (S.mode === 'words' && S.currentWord >= S.words.length) {
+    finishTest(); return;
+  }
+
+  updateWordProgress();
+  requestAnimationFrame(() => { updateCaret(); updateScroll(); });
+}
+
+function handleBackspace(ctrl) {
+  const wi = S.currentWord;
+  const typed = S.typedWords[wi];
+
+  if (ctrl) {
+    // Ctrl+Backspace: clear current word
+    typed.length = 0;
+    S.currentChar = 0;
+  } else if (typed.length > 0) {
+    typed.pop();
+    S.currentChar = typed.length;
+  } else if (wi > 0) {
+    // Jump back to previous word
+    S.currentWord--;
+    S.currentChar = S.typedWords[S.currentWord].length;
+  }
+
+  updateWordDisplay(S.currentWord);
+  requestAnimationFrame(() => { updateCaret(); updateScroll(); });
+}
+
+function updateWordProgress() {
+  if (S.mode !== 'words') return;
+  const pct = (S.currentWord / S.wordCount) * 100;
+  wProgressFill.style.width = pct + '%';
+  timerEl.textContent = S.wordCount - S.currentWord;
+}
+
+// ═══════════════════════════════════════════════════════
+//  FINISH TEST
+// ═══════════════════════════════════════════════════════
+function finishTest() {
+  if (S.isFinished) return;
+  clearInterval(S.timerInt);
+  clearInterval(S.wpmInt);
+  S.isFinished = true;
+  S.isRunning = false;
+  S.endTime = performance.now();
+  timerEl.style.color = '';
+  caretEl.classList.remove('typing');
+
+  const elapsed = (S.endTime - S.startTime) / 1000; // seconds
+  const elapsedMin = elapsed / 60;
+
+  const correctChars = getCorrectChars();
+  const wpm = Math.max(0, Math.round((correctChars / 5) / elapsedMin));
+  const rawWpm = Math.round((S.totalKeys / 5) / elapsedMin);
+  const acc = S.totalKeys > 0 ? +((S.correctKeys / S.totalKeys) * 100).toFixed(1) : 100;
+
+  // Burst WPM (highest 3-second window)
+  let burst = 0;
+  if (S.keystrokeHistory.length > 0) {
+    const windowMs = 3000;
+    for (let i = 0; i < S.keystrokeHistory.length; i++) {
+      const t0 = S.keystrokeHistory[i].t;
+      let cnt = 0;
+      for (let j = i; j < S.keystrokeHistory.length && S.keystrokeHistory[j].t - t0 <= windowMs; j++) {
+        if (S.keystrokeHistory[j].correct) cnt++;
+      }
+      const bWpm = Math.round((cnt / 5) / (windowMs / 60000));
+      if (bWpm > burst) burst = bWpm;
+    }
+  }
+
+  // Consistency
+  let cons = 100;
+  const wpms = S.wpmHistory.map(h => h.wpm).filter(w => w > 0);
+  if (wpms.length > 1) {
+    const mean = wpms.reduce((a,b) => a+b, 0) / wpms.length;
+    const variance = wpms.reduce((a,b) => a + (b-mean)**2, 0) / wpms.length;
+    const sd = Math.sqrt(variance);
+    cons = Math.max(0, Math.round(100 - (sd / Math.max(mean,1)) * 100));
+  }
+
+  // Error positions for chart
+  const errPositions = S.keystrokeHistory
+    .filter(k => !k.correct)
+    .map(k => ({ t: Math.round(k.t/1000) }));
+
+  const incorrectChars = S.totalKeys - S.correctKeys;
+  const mode = `${S.mode} ${S.mode === 'time' ? S.timeLimit : S.wordCount}`;
+
+  S.results = {
+    wpm, rawWpm, acc, cons, burst,
+    correct: correctChars, incorrect: incorrectChars,
+    time: Math.round(elapsed), mode,
+    wpmHistory: [...S.wpmHistory],
+    errPositions,
+    id: Date.now()
+  };
+
+  showResults();
+}
+
+function getCorrectChars() {
+  let n = 0;
+  S.typedWords.forEach((typed, wi) => {
+    const word = S.words[wi];
+    if (!word) return;
+    typed.forEach((c, ci) => {
+      if (ci < word.length && c === word[ci]) n++;
+    });
+  });
+  return n;
+}
+
+// ═══════════════════════════════════════════════════════
+//  SHOW RESULTS
+// ═══════════════════════════════════════════════════════
+function showResults() {
+  $('typing-zone').style.display = 'none';
+  const r = $('results');
+  r.classList.add('show');
+
+  const res = S.results;
+  $('r-wpm').textContent = res.wpm;
+  $('r-raw').textContent = res.rawWpm;
+  $('r-acc').textContent = res.acc + '%';
+  $('r-cons').textContent = res.cons + '%';
+  $('r-chars').innerHTML = `<span style="color:var(--correct)">${res.correct}</span><span class="acc-chars"> / ${res.incorrect} err</span>`;
+  $('r-errors').textContent = res.incorrect;
+  $('r-time').textContent = res.time + 's';
+  $('r-burst').textContent = res.burst;
+
+  drawChart(res);
+  renderLeaderboard();
+}
+
+// ═══════════════════════════════════════════════════════
+//  CHART
+// ═══════════════════════════════════════════════════════
+function drawChart(res) {
+  if (S.resultChart) { S.resultChart.destroy(); S.resultChart = null; }
+
+  const canvas = $('result-chart');
+  const ctx = canvas.getContext('2d');
+
+  const history = res.wpmHistory;
+  if (history.length === 0) return;
+
+  const isDark = S.theme === 'dark';
+  const accent = isDark ? '#4d84e8' : '#2d68cc';
+  const gridColor = isDark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.07)';
+  const textColor = isDark ? '#6e7280' : '#888c9a';
+
+  // WPM line data
+  const wpmData = history.map(h => ({ x: h.t, y: h.wpm }));
+
+  // Error scatter
+  const errData = res.errPositions.map(e => {
+    const nearSample = history.find(h => h.t >= e.t) || history[history.length-1];
+    return { x: e.t, y: nearSample ? nearSample.wpm : 0 };
+  });
+
+  // Unique errors for scatter
+  const errMap = {};
+  errData.forEach(p => { if (!errMap[p.x]) errMap[p.x] = p; });
+  const errScatter = Object.values(errMap);
+
+  S.resultChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      datasets: [
+        {
+          label: 'wpm',
+          data: wpmData,
+          borderColor: accent,
+          backgroundColor: accent + '20',
+          borderWidth: 2.5,
+          fill: true,
+          tension: 0.4,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          order: 2,
+        },
+        {
+          label: 'errors',
+          data: errScatter,
+          type: 'scatter',
+          borderColor: '#d95f5f',
+          backgroundColor: '#d95f5f',
+          pointStyle: 'crossRot',
+          pointRadius: 7,
+          pointBorderWidth: 2.5,
+          order: 1,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { intersect: false, mode: 'index' },
+      animation: { duration: 400 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: isDark ? '#32353b' : '#dddcd7',
+          titleColor: textColor,
+          bodyColor: isDark ? '#c8ccd5' : '#2a2d35',
+          borderColor: isDark ? '#3d4046' : '#c8c7c2',
+          borderWidth: 1,
+          padding: 10,
+          callbacks: {
+            title: items => `${items[0].parsed.x}s`,
+            label: item => item.datasetIndex === 0 ? ` ${item.parsed.y} wpm` : ` error`,
+          }
+        }
+      },
+      scales: {
+        x: {
+          type: 'linear',
+          grid: { color: gridColor },
+          ticks: { color: textColor, font: { family: "'JetBrains Mono'" }, maxTicksLimit: 10 },
+          title: { display: false },
+        },
+        y: {
+          min: 0,
+          grid: { color: gridColor },
+          ticks: { color: textColor, font: { family: "'JetBrains Mono'" }, maxTicksLimit: 6 },
+        }
+      }
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  LEADERBOARD
+// ═══════════════════════════════════════════════════════
+function saveToLeaderboard() {
+  const res = S.results;
+  if (!res) return;
+  const entry = {
+    id: res.id,
+    wpm: res.wpm, raw: res.rawWpm, acc: res.acc,
+    cons: res.cons, burst: res.burst,
+    chars: res.correct, errors: res.incorrect,
+    time: res.time, mode: res.mode,
+    date: new Date().toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'})
+  };
+  S.leaderboard.unshift(entry);
+  if (S.leaderboard.length > 100) S.leaderboard = S.leaderboard.slice(0, 100);
+  S.newEntryId = entry.id;
+  saveLeaderboard();
+  renderLeaderboard();
+  showToast('Result saved!');
+}
+
+const COL_DEFS = [
+  { key:'rank', label:'#', sort:null },
+  { key:'wpm', label:'wpm', sort:'wpm' },
+  { key:'raw', label:'raw', sort:'raw' },
+  { key:'acc', label:'acc', sort:'acc' },
+  { key:'cons', label:'cons', sort:'cons' },
+  { key:'burst', label:'burst', sort:'burst' },
+  { key:'chars', label:'chars', sort:'chars' },
+  { key:'errors', label:'errors', sort:'errors' },
+  { key:'mode', label:'mode', sort:null },
+  { key:'date', label:'date', sort:null },
+];
+
+function renderLeaderboard() {
+  const body = $('lb-body');
+  const empty = $('lb-empty');
+
+  let data = [...S.leaderboard];
+
+  // Filter
+  if (S.lbFilter !== 'all') {
+    data = data.filter(e => e.mode === S.lbFilter);
+  }
+
+  // Sort
+  if (S.lbSort) {
+    data.sort((a,b) => (b[S.lbSort] - a[S.lbSort]) * S.lbDir);
+  }
+
+  if (data.length === 0) {
+    empty.style.display = 'flex';
+    const tbl = body.querySelector('table');
+    if (tbl) tbl.remove();
+    return;
+  }
+
+  empty.style.display = 'none';
+
+  const table = document.createElement('table');
+  table.className = 'lb-table';
+
+  // Header
+  const thead = table.createTHead();
+  const hr = thead.insertRow();
+  COL_DEFS.forEach(col => {
+    const th = document.createElement('th');
+    if (col.sort) {
+      th.innerHTML = col.label + `<span class="sort-arrow">${S.lbSort===col.sort ? (S.lbDir===1?'↑':'↓') : ''}</span>`;
+      th.classList.toggle('sorted', S.lbSort === col.sort);
+      th.addEventListener('click', () => {
+        if (S.lbSort === col.sort) S.lbDir *= -1;
+        else { S.lbSort = col.sort; S.lbDir = -1; }
+        renderLeaderboard();
+      });
+    } else {
+      th.textContent = col.label;
+    }
+    hr.appendChild(th);
+  });
+
+  // Body
+  const tbody = table.createTBody();
+  data.forEach((entry, i) => {
+    const tr = tbody.insertRow();
+    if (entry.id === S.newEntryId) { tr.className = 'new'; }
+    const rankCls = i===0?'g':i===1?'s':i===2?'b':'';
+    tr.insertCell().innerHTML = `<span class="rank ${rankCls}">${i+1}</span>`;
+    tr.insertCell().textContent = entry.wpm;
+    tr.insertCell().textContent = entry.raw;
+    tr.insertCell().textContent = entry.acc + '%';
+    tr.insertCell().textContent = entry.cons + '%';
+    tr.insertCell().textContent = entry.burst;
+    tr.insertCell().textContent = entry.chars;
+    tr.insertCell().textContent = entry.errors;
+    const mTd = tr.insertCell(); mTd.textContent = entry.mode; mTd.className = 'lbl';
+    const dTd = tr.insertCell(); dTd.textContent = entry.date; dTd.className = 'lbl';
+  });
+
+  body.innerHTML = '';
+  body.appendChild(empty);
+  body.appendChild(table);
+}
+
+// ═══════════════════════════════════════════════════════
+//  EXPORT PNG
+// ═══════════════════════════════════════════════════════
+function exportPNG() {
+  const res = S.results;
+  if (!res) return;
+  const isDark = S.theme === 'dark';
+  const W = 900, H = 420;
+  const canvas = document.createElement('canvas');
+  canvas.width = W * 2; canvas.height = H * 2;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(2, 2);
+
+  // BG
+  ctx.fillStyle = isDark ? '#1e2023' : '#f0efea';
+  ctx.fillRect(0, 0, W, H);
+
+  // Top bar accent
+  ctx.fillStyle = isDark ? '#4d84e8' : '#2d68cc';
+  ctx.fillRect(0, 0, W, 4);
+
+  // Logo
+  ctx.fillStyle = isDark ? '#4d84e8' : '#2d68cc';
+  ctx.font = '400 22px "JetBrains Mono", monospace';
+  ctx.fillText('TypeFlow', 48, 52);
+
+  // Mode chip
+  ctx.fillStyle = isDark ? '#32353b' : '#dddcd7';
+  ctx.beginPath();
+  ctx.roundRect(W - 180, 32, 132, 26, 13);
+  ctx.fill();
+  ctx.fillStyle = isDark ? '#6e7280' : '#888c9a';
+  ctx.font = '500 11px "Outfit", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(res.mode, W - 114, 49);
+  ctx.textAlign = 'left';
+
+  // WPM
+  ctx.fillStyle = isDark ? '#4d84e8' : '#2d68cc';
+  ctx.font = '300 96px "JetBrains Mono", monospace';
+  ctx.fillText(res.wpm, 48, 175);
+
+  ctx.fillStyle = isDark ? '#6e7280' : '#888c9a';
+  ctx.font = '600 11px "Outfit", sans-serif';
+  ctx.letterSpacing = '1.5px';
+  ctx.fillText('WPM', 52, 198);
+  ctx.letterSpacing = '0px';
+
+  // Stats grid
+  const stats = [
+    ['raw', res.rawWpm], ['acc', res.acc + '%'], ['burst', res.burst],
+    ['cons', res.cons + '%'], ['chars', res.correct], ['errors', res.incorrect],
+  ];
+  stats.forEach(([label, val], i) => {
+    const col = i % 3, row = Math.floor(i / 3);
+    const x = 300 + col * 180, y = 120 + row * 80;
+    ctx.fillStyle = isDark ? '#c8ccd5' : '#2a2d35';
+    ctx.font = '300 28px "JetBrains Mono", monospace';
+    ctx.fillText(String(val), x, y + 2);
+    ctx.fillStyle = isDark ? '#6e7280' : '#888c9a';
+    ctx.font = '500 10px "Outfit", sans-serif';
+    ctx.letterSpacing = '1px';
+    ctx.fillText(label.toUpperCase(), x, y + 22);
+    ctx.letterSpacing = '0px';
+  });
+
+  // Divider
+  ctx.strokeStyle = isDark ? '#3d4046' : '#c8c7c2';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(48, 225); ctx.lineTo(W - 48, 225);
+  ctx.stroke();
+
+  // WPM sparkline
+  const hist = res.wpmHistory;
+  if (hist.length > 1) {
+    const gx0 = 48, gy0 = 260, gw = W - 96, gh = 110;
+    const maxWpm = Math.max(...hist.map(h => h.wpm), 10);
+    const maxT = Math.max(...hist.map(h => h.t), 1);
+
+    ctx.strokeStyle = isDark ? '#4d84e8' : '#2d68cc';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    hist.forEach((h, i) => {
+      const px = gx0 + (h.t / maxT) * gw;
+      const py = gy0 + gh - (h.wpm / maxWpm) * gh;
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    });
+    ctx.stroke();
+
+    // Error markers
+    ctx.strokeStyle = '#d95f5f';
+    ctx.lineWidth = 2;
+    res.errPositions.forEach(e => {
+      const h = hist.find(h => h.t >= e.t) || hist[hist.length-1];
+      const px = gx0 + (e.t / maxT) * gw;
+      const py = gy0 + gh - ((h ? h.wpm : 0) / maxWpm) * gh;
+      ctx.beginPath();
+      ctx.moveTo(px-5, py-5); ctx.lineTo(px+5, py+5);
+      ctx.moveTo(px+5, py-5); ctx.lineTo(px-5, py+5);
+      ctx.stroke();
+    });
+  }
+
+  // Watermark
+  ctx.fillStyle = isDark ? '#404450' : '#c8c7c2';
+  ctx.font = '400 11px "JetBrains Mono", monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText('TypeFlow · ' + new Date().toLocaleDateString(), W - 48, H - 20);
+
+  // Download
+  const a = document.createElement('a');
+  a.download = `TypeFlow-${res.wpm}wpm-${res.mode.replace(' ','')}.png`;
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+  showToast('Image exported!');
+}
+
+// ═══════════════════════════════════════════════════════
+//  SOUND
+// ═══════════════════════════════════════════════════════
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playClick(type) {
+  try {
+    const ac = getAudioCtx();
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.connect(gain); gain.connect(ac.destination);
+    osc.frequency.value = type === 'ok' ? 800 : 300;
+    osc.type = 'square';
+    gain.gain.setValueAtTime(0.04, ac.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.04);
+    osc.start(); osc.stop(ac.currentTime + 0.04);
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════════
+let toastTimer = null;
+function showToast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ═══════════════════════════════════════════════════════
+//  FOCUS MANAGEMENT
+// ═══════════════════════════════════════════════════════
+function setFocus(focused) {
+  S.focused = focused;
+  focusOvEl.classList.toggle('show', !focused);
+  if (focused) {
+    inpEl.focus();
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  EVENT LISTENERS
+// ═══════════════════════════════════════════════════════
+// Click to focus
+$('typing-zone').addEventListener('click', () => {
+  if (!S.isFinished) setFocus(true);
+});
+$('words-wrap').addEventListener('click', () => {
+  if (!S.isFinished) setFocus(true);
+});
+
+// Keyboard global
+document.addEventListener('keydown', e => {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    if (!$('settings').classList.contains('open')) {
+      S.newEntryId = null;
+      initTest();
+      if (S.focused) setFocus(true);
+    }
+    return;
+  }
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    if ($('settings').classList.contains('open')) {
+      closeSettings();
+    } else if (S.isRunning) {
+      clearInterval(S.timerInt); clearInterval(S.wpmInt);
+      S.isRunning = false; S.isFinished = true;
+      initTest();
+    }
+    return;
+  }
+  if (e.key === 'Enter' && S.isFinished) {
+    S.newEntryId = null; initTest(); setFocus(true);
+    return;
+  }
+});
+
+inpEl.addEventListener('keydown', handleKey);
+
+// Blur detection
+inpEl.addEventListener('blur', () => {
+  if (!S.isFinished) {
+    S.focused = false;
+    if (S.isRunning) {
+      focusOvEl.classList.add('show');
+    }
+  }
+});
+
+// Prevent paste
+inpEl.addEventListener('paste', e => e.preventDefault());
+
+// Config bar: mode
+document.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => {
+  S.mode = b.dataset.mode;
+  applyConfigUI(); saveSettings();
+  S.newEntryId = null; initTest();
+}));
+
+// Config bar: time
+document.querySelectorAll('[data-time]').forEach(b => b.addEventListener('click', () => {
+  S.timeLimit = +b.dataset.time;
+  S.mode = 'time';
+  applyConfigUI(); saveSettings();
+  S.newEntryId = null; initTest();
+}));
+
+// Config bar: words
+document.querySelectorAll('[data-words]').forEach(b => b.addEventListener('click', () => {
+  S.wordCount = +b.dataset.words;
+  S.mode = 'words';
+  applyConfigUI(); saveSettings();
+  S.newEntryId = null; initTest();
+}));
+
+// Config bar: nums/punct
+$('toggle-nums').addEventListener('click', () => {
+  S.useNums = !S.useNums;
+  applyConfigUI(); saveSettings();
+  S.newEntryId = null; initTest();
+});
+$('toggle-punct').addEventListener('click', () => {
+  S.usePunct = !S.usePunct;
+  applyConfigUI(); saveSettings();
+  S.newEntryId = null; initTest();
+});
+
+// Restart button
+$('btn-restart').addEventListener('click', () => { S.newEntryId = null; initTest(); });
+
+// Results buttons
+$('r-again').addEventListener('click', () => {
+  S.words = generateWords(S.mode === 'time' ? Math.max(200, S.timeLimit*3) : S.wordCount);
+  S.newEntryId = null; initTest(); setFocus(true);
+  // Reuse same word list concept — just reinit
+});
+$('r-new').addEventListener('click', () => { S.newEntryId = null; initTest(); setFocus(true); });
+$('r-save').addEventListener('click', saveToLeaderboard);
+$('r-export').addEventListener('click', exportPNG);
+
+// Theme toggle
+$('btn-theme').addEventListener('click', () => {
+  S.theme = S.theme === 'dark' ? 'light' : 'dark';
+  applyTheme(); saveSettings();
+  if (S.results && $('results').classList.contains('show')) {
+    drawChart(S.results);
+  }
+});
+
+// Settings panel
+$('btn-settings').addEventListener('click', openSettings);
+$('close-settings').addEventListener('click', closeSettings);
+$('settings-overlay').addEventListener('click', closeSettings);
+
+function openSettings() {
+  $('settings').classList.add('open');
+  $('settings-overlay').classList.add('open');
+}
+function closeSettings() {
+  $('settings').classList.remove('open');
+  $('settings-overlay').classList.remove('open');
+}
+
+// Settings toggles
+$('s-smooth').addEventListener('change', () => { S.smoothCaret = $('s-smooth').checked; applySmoothCaret(); saveSettings(); });
+$('s-livewpm').addEventListener('change', () => { S.liveWpm = $('s-livewpm').checked; saveSettings(); });
+$('s-sound').addEventListener('change', () => { S.sound = $('s-sound').checked; saveSettings(); });
+$('s-strict').addEventListener('change', () => { S.strict = $('s-strict').checked; saveSettings(); });
+$('s-blind').addEventListener('change', () => { S.blindMode = $('s-blind').checked; saveSettings(); });
+
+// Theme in settings
+$('s-dark').addEventListener('click', () => { S.theme='dark'; applyTheme(); saveSettings(); if(S.results && $('results').classList.contains('show')) drawChart(S.results); });
+$('s-light').addEventListener('click', () => { S.theme='light'; applyTheme(); saveSettings(); if(S.results && $('results').classList.contains('show')) drawChart(S.results); });
+
+// Font size
+document.querySelectorAll('[data-fs]').forEach(b => b.addEventListener('click', () => {
+  S.fontSize = b.dataset.fs;
+  applyFontSize(); saveSettings();
+  setTimeout(() => { updateCaret(); updateScroll(); }, 50);
+}));
+
+// Caret style
+document.querySelectorAll('[data-cs]').forEach(b => b.addEventListener('click', () => {
+  S.caretStyle = b.dataset.cs;
+  applyCaretStyle(); saveSettings();
+}));
+
+// Leaderboard clear
+$('lb-clear').addEventListener('click', () => {
+  if (confirm('Clear all leaderboard entries?')) {
+    S.leaderboard = [];
+    S.newEntryId = null;
+    saveLeaderboard();
+    renderLeaderboard();
+    showToast('Leaderboard cleared');
+  }
+});
+
+// Leaderboard filters
+document.querySelectorAll('[data-lb-filter]').forEach(b => b.addEventListener('click', () => {
+  S.lbFilter = b.dataset.lbFilter;
+  document.querySelectorAll('[data-lb-filter]').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  renderLeaderboard();
+}));
+
+// Resize: recalculate caret
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    updateCaret();
+    updateScroll();
+  }, 100);
+});
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+loadSettings();
+applyAll();
+
+// Set initial timer display
+timerEl.textContent = S.mode === 'time' ? S.timeLimit : S.wordCount;
+
+initTest();
+
+// Render leaderboard on start
+renderLeaderboard();
+
+</script>
+</body>
+</html>
