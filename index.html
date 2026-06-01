@@ -1771,12 +1771,10 @@
   justify-content: center;
   transition: all 0.2s ease;
 }
-
 #fab-focus-btn:hover {
   transform: scale(1.05);
-  background: #7c3aed;
+  box-shadow: 0 6px 20px rgba(92,84,219,0.6);
 }
-
 #fab-focus-btn:active {
   transform: scale(0.95);
 }
@@ -1842,26 +1840,32 @@
             </button>
             <button id="fab-focus-btn" style="
               position: fixed;
-              bottom: 80px;
-              right: 20px;
-              width: 56px;
-              height: 56px;
+              bottom: 24px;
+              right: 48px;
+              width: 72px;
+              height: 72px;
               border-radius: 28px;
-              background: var(--accent);
+              background: linear-gradient(135deg, var(--accent), #7c3aed);
               border: none;
               color: white;
               cursor: pointer;
-              box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-              z-index: 50;
+              box-shadow: 0 4px 16px rgba(92,84,219,0.4);
+              z-index: 9999;
               display: flex;
               align-items: center;
               justify-content: center;
               transition: all 0.2s ease;
             ">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                <circle cx="12" cy="12" r="10"/>
+                <circle cx="12" cy="12" r="4"/>
+                <line x1="12" y1="2" x2="12" y2="4"/>
+                <line x1="12" y1="20" x2="12" y2="22"/>
+                <line x1="2" y1="12" x2="4" y2="12"/>
+                <line x1="20" y1="12" x2="22" y2="12"/>
               </svg>
             </button>
+            
           </div>
           <div class="topbar-center">
             <p class="eyebrow">System Chrono</p>
