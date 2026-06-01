@@ -128,29 +128,29 @@
         display: flex;
         flex-direction: column;
         width: 100%;
-        max-width: 480px;
+        max-width: 1440px;
         gap: 24px;
       }
-      @media (min-width: 960px) {
+      @media (min-width: 768px) {
         body {
-          padding: 40px 60px;
+          padding: 30px 40px;
         }
         .dashboard {
           flex-direction: row;
           align-items: flex-start;
           justify-content: center;
           max-width: 1800px;
-          gap: 56px;
+          gap: 40px;
         }
         .dash-left {
-          flex: 0 0 calc(60% - 28px);
-          max-width: 960px;
+          flex: 0 0 calc(55% - 20px);
+          max-width: 55%;
           position: sticky;
           top: 40px;
         }
         .dash-right {
-          flex: 0 0 calc(40% - 28px);
-          max-width: 700px;
+          flex: 0 0 calc(45% - 20px);
+          max-width: 45%;
         }
       }
       .dash-left,
@@ -1752,6 +1752,42 @@
 #focus-pomo-section button:hover {
   filter: brightness(1.1);
 }
+      /* Floating Action Button */
+#fab-focus-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 28px;
+  background: var(--accent);
+  border: none;
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+#fab-focus-btn:hover {
+  transform: scale(1.05);
+  background: #7c3aed;
+}
+
+#fab-focus-btn:active {
+  transform: scale(0.95);
+}
+
+/* On desktop, hide FAB and show keyboard hint (may want to change this if it doesn't show on tablet.)*/
+@media (min-width: 768px) {
+  #fab-focus-btn {
+    bottom: 30px;
+    right: 30px;
+  }
+}
       
     </style>
   </head>
@@ -1802,6 +1838,28 @@
                   d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
                 <line x1="9" y1="9" x2="15" y2="9" />
                 <line x1="9" y1="13" x2="13" y2="13" />
+              </svg>
+            </button>
+            <button id="fab-focus-btn" style="
+              position: fixed;
+              bottom: 80px;
+              right: 20px;
+              width: 56px;
+              height: 56px;
+              border-radius: 28px;
+              background: var(--accent);
+              border: none;
+              color: white;
+              cursor: pointer;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+              z-index: 50;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              transition: all 0.2s ease;
+            ">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
               </svg>
             </button>
           </div>
@@ -2244,6 +2302,13 @@
           <div class="tracker-card-hdr"><h3>Time Trackers</h3></div>
           <div id="tracker-list"></div>
         </div>
+        <div class="tracker-card" id="tracker-card">
+          <div class="tracker-card-hdr">
+            <h3>Time Trackers</h3>
+            <button id="toggle-trackers-btn" style="background:none;border:none;color:var(--text3);cursor:pointer;">▼</button>
+          </div>
+          <div id="tracker-list"></div>
+        </div>
       </div>
       <div class="dash-right">
         <div class="timeline-card">
@@ -2417,6 +2482,29 @@
               </div>
             </div>
           </div>
+          <button id="focus-mode-btn" style=" /* New code for the floating focus button */
+            margin-top: 16px;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, var(--accent), #7c3aed);
+            border: none;
+            border-radius: 40px;
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+          ">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+            </svg>
+            Focus Mode
+          </button>
+        </div>
         </div>
         <div class="pomo-wrapper" id="pomo-wrapper">
           <div class="pomo-pill-trigger" id="pomo-trigger">
@@ -3854,7 +3942,7 @@ if (document.readyState === 'loading') {
       const EMBEDDED_STATE = null;
       const CX = 300,
         CY = 300,
-        R = 250, // Change size of pie here
+        R = 210, // Change size of pie here
         CR = 65;
       const DAYS = [
         "Sunday",
@@ -4923,6 +5011,15 @@ if (document.readyState === 'loading') {
           if (sw.nextSibling !== tc) dl.appendChild(tc);
         }
       }
+      let trackersCollapsed = false;
+      document.getElementById('toggle-trackers-btn')?.addEventListener('click', () => {
+        trackersCollapsed = !trackersCollapsed;
+        const trackerList = document.getElementById('tracker-list');
+        if (trackerList) {
+          trackerList.style.display = trackersCollapsed ? 'none' : 'block';
+          document.getElementById('toggle-trackers-btn').textContent = trackersCollapsed ? '▶' : '▼';
+        }
+      });
       function getActiveSeg() {
         const now = new Date(),
           ct = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
@@ -6279,6 +6376,12 @@ function updateFocusPomodoroDisplay() {
           rebuildTrackerSettingsList();
         });
       });
+      
+      // Focus mode button for touch devices
+      document.getElementById('focus-mode-btn')?.addEventListener('click', toggleFocusMode);
+      document.getElementById('fab-focus-btn')?.addEventListener('click', toggleFocusMode);
+      document.getElementById('touch-focus-btn')?.addEventListener('click', toggleFocusMode);
+      
       // HOTKEYS: K (stats), X (control panel), D (theme), W (collapse)
       document.addEventListener("keydown", (e) => {
         const tag = document.activeElement.tagName;
